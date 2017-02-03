@@ -1,0 +1,191 @@
+﻿<div ng-controller="myPermissionCtrl" id="permissionEditor" style="display:none;position:absolute;left:0px;top:0px;background:lightblue;width:900px;height:400px">
+	<input type="button" ng-click="btPermissionOKClick()" value="OK" id="btPermissionOK" class="ms-ButtonHeightWidth" target="_self"/>
+	<input type="button" ng-click="btPermissionCancelClick()" value="Cancel" id="btPermissionCancel" class="ms-ButtonHeightWidth" target="_self"/>
+
+	<div>
+		{{msg}}
+		<!--<md-progress-circular ng-show="waiting" md-mode="indeterminate"></md-progress-circular>-->
+		<md-tabs md-selected="selectedTabIndex" md-dynamic-height md-border-bottom>
+			<!--<md-tab label="BG" ng-if="1==0">
+				<md-button ng-click="previousTab()">previous</md-button>
+					<md-input-container>
+						<md-select ng-model="selectedBG" ng-change="selectedChanged(OptionManager.TypeList.BG)" multiple placeholder="Select BG">
+							<md-option ng-value="item.Value" ng-repeat="item in BGOptions">{{item.Value}}</md-option>
+						</md-select>
+					</md-input-container>
+				<md-button ng-click="nextTab()">next</md-button>
+			</md-tab>-->
+			<md-tab label="DomainAccount" md-on-select="delayLoadOption('DomainAccount')">
+				<md-input-container>
+					<md-select ng-model="selectedDomainAccount" ng-change="selectedChanged(OptionManager.TypeList.DomainAccount)" multiple placeholder="Select DomainAccount">
+						<md-option ng-value="item.Value" ng-repeat="item in DomainAccountOptions">{{item.Value}}</md-option>
+					</md-select>
+				</md-input-container>
+			</md-tab>
+			<md-tab label="ProfitCenter" md-on-select="delayLoadOption('ProfitCenter')">
+				<md-input-container style="width:200px">
+					<md-select ng-model="selectedProfitCenter" ng-change="selectedChanged(OptionManager.TypeList.ProfitCenter)" multiple placeholder="input at least 2 letters">
+						<md-select-header>
+							<input ng-model="inputProfitCenter"
+									ng-keydown="onSearchChange($event)" />
+						</md-select-header>
+						<md-option ng-value="item.Value" ng-repeat="item in ProfitCenterOptions | filter:inputProfitCenter">{{item.Value}}</md-option>
+					</md-select>
+				</md-input-container>
+			</md-tab>
+			<md-tab label="Office" md-on-select="delayLoadOption('Office')">
+				<md-input-container>
+					<md-select ng-model="selectedOffice" ng-change="selectedChanged(OptionManager.TypeList.Office)" multiple placeholder="Select Office">
+						<md-option ng-value="item.Value" ng-repeat="item in OfficeOptions">{{item.Value}}</md-option>
+					</md-select>
+				</md-input-container>
+
+			</md-tab>
+			<md-tab label="SalesOffice" md-on-select="delayLoadOption('SalesOffice')">
+				<md-input-container>
+					<md-select ng-model="selectedSalesOffice" ng-change="selectedChanged(OptionManager.TypeList.SalesOffice)" multiple placeholder="Select SalesOffice">
+						<md-option ng-value="item.Value" ng-repeat="item in SalesOfficeOptions">{{item.Value}}</md-option>
+					</md-select>
+				</md-input-container>
+			</md-tab>
+			<md-tab label="SalesType" md-on-select="delayLoadOption('SalesType')">
+				<md-input-container>
+					<md-select ng-model="selectedSalesType" ng-change="selectedChanged(OptionManager.TypeList.SalesType)" multiple placeholder="Select SalesType">
+						<md-option ng-value="item.Value" ng-repeat="item in SalesTypeOptions">{{item.Value}}</md-option>
+					</md-select>
+				</md-input-container>
+			</md-tab>
+			<md-tab label="EndCustomer">
+				<md-input-container>
+					<md-select ng-model="selectedEndCustomer" ng-change="selectedChanged(OptionManager.TypeList.EndCustomer)" multiple placeholder="input at least 2 letters">
+						<md-select-header>
+							<input ng-model="inputEndCustomer"
+									ng-change="inputChanged('EndCustomer')"
+									ng-keydown="onSearchChange($event)" />
+						</md-select-header>
+						<md-option ng-value="item.Value" ng-repeat="item in EndCustomerOptions | filter:inputEndCustomer">{{item.Value}}</md-option>
+					</md-select>
+				</md-input-container>
+			</md-tab>
+			<md-tab label="SoldToCustomer">
+				<md-input-container>
+					<md-select ng-model="selectedSoldToCustomer" ng-change="selectedChanged(OptionManager.TypeList.SoldToCustomer)" multiple placeholder="input at least 2 letters">
+						<md-select-header>
+							<input ng-model="inputSoldToCustomer"
+									ng-change="inputChanged('SoldToCustomer')"
+									ng-keydown="onSearchChange($event)" />
+						</md-select-header>
+						<md-option ng-value="item.Value" ng-repeat="item in SoldToCustomerOptions | filter:inputSoldToCustomer">{{item.Value}}</md-option>
+					</md-select>
+				</md-input-container>
+			</md-tab>
+		</md-tabs>
+
+		<md-button ng-if="expRoot.Children.length == 0" ng-click="addInGroup(expRoot)" class="md-fab md-mini md-primary">+</md-button>
+		<input type="button" ng-if="expRoot.Children.length > 0" ng-click="resetExpRoot()" value="clear" class="ms-ButtonHeightWidth" target="_self"/>
+
+		<script type="text/ng-template" id="expTree">
+			<div class="my-inline" ng-if="tempExp.IsGroup == false">
+				<md-menu ng-if="tempExp.getGroupLogic() != ''">
+					<md-button class="md-no-style1" ng-click="openMenu($mdOpenMenu, $event)">{{tempExp.getGroupLogic()}}</md-button>
+					<md-menu-content>
+						<md-menu-item>
+							<md-button class="md-no-style1" ng-click="changeGroupLogic(tempExp)">and / or</md-button>
+						</md-menu-item>
+					</md-menu-content>
+				</md-menu>
+				<md-menu>
+					<md-button class="md-no-style1" ng-click="openMenu($mdOpenMenu, $event)">{{tempExp.Field}} {{tempExp.Operation}} {{tempExp.Value}}</md-button>
+					<md-menu-content>
+						<md-menu-item>
+							<md-button class="md-no-style1" ng-click="openSingleEditor(tempExp)">edit</md-button>
+						</md-menu-item>
+					</md-menu-content>
+				</md-menu>
+			</div>
+			<div class="my-inline" ng-if="tempExp.IsGroup == true && tempExp.Children.length > 0">
+				<md-menu ng-if="tempExp.getGroupLogic() != ''">
+					<md-button class="md-no-style1" ng-click="openMenu($mdOpenMenu, $event)">{{tempExp.getGroupLogic()}}</md-button>
+					<md-menu-content>
+						<md-menu-item>
+							<md-button class="md-no-style1" ng-click="changeGroupLogic(tempExp)">and / or</md-button>
+						</md-menu-item>
+					</md-menu-content>
+				</md-menu>
+				(
+				<div class="my-inline" ng-repeat="tempExp in tempExp.Children" ng-include="'expTree'">
+
+				</div>
+				<md-menu>
+					<md-button class="md-no-style1" ng-click="openMenu($mdOpenMenu, $event)">)</md-button>
+					<md-menu-content>
+						<md-menu-item>
+							<md-button class="md-no-style1" ng-click="addInGroup(tempExp)">add in group</md-button>
+						</md-menu-item>
+						<md-menu-item>
+							<md-button class="md-no-style1" ng-click="addGroup(tempExp)">add after group</md-button>
+						</md-menu-item>
+					</md-menu-content>
+				</md-menu>
+			</div>
+		</script>
+
+		<div class="my-inline" ng-if="expRoot.Children.length > 0">
+			(
+			<div class="my-inline" ng-repeat="tempExp in expRoot.Children" ng-include="'expTree'">
+
+			</div>
+			<md-menu>
+				<md-button class="md-no-style1" ng-click="openMenu($mdOpenMenu, $event)">)</md-button>
+				<md-menu-content>
+					<md-menu-item>
+						<md-button class="md-no-style1" ng-click="addInGroup(expRoot)">add in group</md-button>
+					</md-menu-item>
+					<md-menu-item>
+						<md-button class="md-no-style1" ng-click="addGroup(expRoot)">add after group</md-button>
+					</md-menu-item>
+				</md-menu-content>
+			</md-menu>
+		</div>
+
+		<br></br>
+		<div id="HiddenAngular" ng-if="1==0">
+			<div id="AngularJSONStr">{{expRoot | json}}</div>
+			<br />
+			<div id="AngularPermission">{{expRoot.ToString()}}</div>
+		</div>
+
+		<div id="setFieldValueContainer" style="display:none;position:absolute;left:200px;top:100px;background:lightyellow;width:300px;">
+			<table>
+				<tr>
+					<td>Field :</td>
+					<td><md-select ng-model="singleField" ng-change="selectedSingleFieldChanged()">
+							<md-option ng-value="item" ng-repeat="item in OptionManager.TypeList">{{item}}</md-option>
+						</md-select></td>
+				</tr>
+				<tr>
+					<td>Operation : </td>
+					<td><md-select ng-model="singleOperation">
+							<md-option ng-value="item" ng-repeat="item in OptionManager.OperationList">{{item}}</md-option>
+						</md-select></td>
+				</tr>
+				<tr>
+					<td>Value :</td>
+					<td><input ng-show="singleOperation!='='" type="text" ng-model="singleValue" />
+						<md-select ng-show="singleOperation=='='" ng-model="singleValue" placeholder="input at least 2 letters">
+							<md-select-header>
+								<input ng-model="inputCommon"
+										ng-change="$inputCommonChanged()"
+										ng-keydown="onSearchChange($event)" />
+							</md-select-header>
+							<md-option ng-value="item.Value" ng-repeat="item in commonList | filter:inputCommon">{{item.Value}}</md-option>
+						</md-select></td>
+				</tr>
+				<tr>
+					<td colspan="2"><input type="button" ng-click="btSetFieldValueOKClick()" value="OK" class="ms-ButtonHeightWidth" target="_self"/>
+						<input type="button" ng-click="btSetFieldValueCancelClick()" value="Cancel" class="ms-ButtonHeightWidth" target="_self"/></td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</div>

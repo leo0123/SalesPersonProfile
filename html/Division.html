@@ -1,0 +1,7 @@
+﻿<div ng-controller="myDivisionCtrl" style="position:absolute;left:0px;top:0px;">
+	<md-input-container style="margin:0px 0px;">
+		<md-select ng-model="selectedDivision" ng-change="selectedChanged()" multiple placeholder="Select Division">
+			<md-option ng-value="item" ng-repeat="item in DivisionOptions">{{item}}</md-option>
+		</md-select>
+	</md-input-container>
+</div>

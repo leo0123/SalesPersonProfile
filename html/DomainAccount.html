@@ -1,0 +1,7 @@
+﻿<div ng-controller="myDomainAccountCtrl" style="position:absolute;left:0px;top:0px;">
+	<md-input-container style="margin:0px 0px;">
+		<md-select ng-model="selectedValue" ng-change="selectedChanged()" placeholder="Select DomainAccount">
+			<md-option ng-value="item" ng-repeat="item in Options">{{item.ntaccount}}</md-option>
+		</md-select>
+	</md-input-container>
+</div>

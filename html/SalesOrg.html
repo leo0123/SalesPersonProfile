@@ -1,0 +1,7 @@
+﻿<div ng-controller="mySalesOrgCtrl" style="position:absolute;left:0px;top:0px;">
+	<md-input-container style="margin:0px 0px;">
+		<md-select ng-model="selectedSalesOrg" ng-change="selectedChanged()" multiple placeholder="Select Sales Org">
+			<md-option ng-value="item.ORG" ng-repeat="item in SalesOrgOptions">{{item.ORG}}</md-option>
+		</md-select>
+	</md-input-container>
+</div>
