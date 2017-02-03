@@ -1,3 +1,6 @@
+var ExpressionManager=require("./ExpressionManager.js");
+var CustomizeExpression=require("./CustomizeExpression.js");
+
 function CustomizeExpressionManager() {
 	ExpressionManager.call(this);
 
@@ -104,3 +107,5 @@ function CustomizeExpressionManager() {
 CustomizeExpressionManager.prototype = Object.create(ExpressionManager.prototype);
 
 CustomizeExpressionManager.prototype.constructor = CustomizeExpressionManager;
+
+module.exports=CustomizeExpressionManager;

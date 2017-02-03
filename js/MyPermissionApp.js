@@ -1,4 +1,10 @@
-﻿(function () {
+var myPermissionApp=require("./MyPermissionCtrl.js");
+var myPermissionModel=require("./MyModel.js");
+var angular=require("angular");
+var $=require("jquery");
+require("angular-material");
+
+(function () {
 	var app = angular.module('myApp', ['ngMaterial']);
 	var spDomainAccountTitle = "[title='Domain Account Required Field']";
 

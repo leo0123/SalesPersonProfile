@@ -117,3 +117,5 @@ Expression.prototype.CopyFrom = function (e, parent) {
 	}
 	return this;
 };
+
+module.exports=Expression;

@@ -1,4 +1,6 @@
-﻿function ExpressionManager() {
+var Expression=require("./Expression.js");
+
+function ExpressionManager() {
 	//var expT = new CustomizeExpression();
 	//var testaa = expT.getChildGroup('BG');
 	var expR = new Expression();
@@ -41,3 +43,5 @@
 		return newExp;
 	};
 };
+
+module.exports=ExpressionManager;

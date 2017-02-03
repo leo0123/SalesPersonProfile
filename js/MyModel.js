@@ -1,12 +1,14 @@
 var myPermissionModel = myPermissionModel || {};
 
+var htmlPath = "../html/";
+
 myPermissionModel.UrlList = {
 	serviceUrl: "http://amdpfweb02:8080/SAPBW3DataService.svc/",
 	digestUrl: "http://amdpfwfe02:9999/_api/contextinfo",
-	permissionHtmlUrl: "../../SitePages/permission.html",
-	SalesOrgHtmlUrl: "../../SitePages/SalesOrg.html",
-	DivisionHtmlUrl: "../../SitePages/Division.html",
-	DomainAccountHtmlUrl: "../../SitePages/DomainAccount.html",
+	permissionHtmlUrl: htmlPath+"permission.html",
+	SalesOrgHtmlUrl: htmlPath+"SalesOrg.html",
+	DivisionHtmlUrl: htmlPath+"Division.html",
+	DomainAccountHtmlUrl: htmlPath+"DomainAccount.html",
 	listServer: "http://amdpfwfe02:9999/",
 	SPUserProfileUrl: "http://amdpfwfe02:9999/_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v=" //'delta\username'
 };
@@ -25,7 +27,7 @@ myPermissionModel.OptionManager = function () {
 		EndCustomer: "[End Customer]",
 		SoldToCustomer: "CustName"
 	};
-	
+
 	this.isSalesP=function(field){
 		if (field.toLowerCase()=="salesp"){
 			return true;
@@ -175,3 +177,5 @@ myPermissionModel.OptionManager = function () {
 		}
 	}
 };
+
+module.exports=myPermissionModel;

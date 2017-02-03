@@ -1,0 +1,19 @@
+{
+    "name": "SalesPersonProfileSolutionV1",
+    "version": "1.0.0",
+    "main": "index.js",
+    "repository": "https://github.com/leo0123/SalesPersonProfileSolutionV1.git",
+    "author": "Leo <leo.c.chen@deltaww.com>",
+    "license": "MIT",
+    "dependencies": {
+        "angular": "^1.6.1",
+        "angular-animate": "^1.6.1",
+        "angular-aria": "^1.6.1",
+        "angular-material": "^1.1.3",
+        "jquery": "^3.1.1"
+    },
+    "style": [
+        "./css/my.css",
+        "./node_modules/angular-material/angular-material.css"
+    ]
+}

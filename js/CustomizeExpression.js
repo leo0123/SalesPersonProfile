@@ -1,4 +1,6 @@
-﻿function CustomizeExpression(field) {
+var Expression = require("./Expression.js");
+
+function CustomizeExpression(field) {
 	Expression.call(this);
 
 	this.setGroup();
@@ -34,3 +36,5 @@
 CustomizeExpression.prototype = Object.create(Expression.prototype);
 
 CustomizeExpression.prototype.constructor = CustomizeExpression;
+
+module.exports=CustomizeExpression;

@@ -1,0 +1,25 @@
+<html>
+
+<head>
+
+  <link href="../bundle.css" rel="stylesheet" />
+  <script src="../bundle.js" type="text/javascript"></script>
+</head>
+
+<body>
+    <div ng-app="myApp" ng-controller="myCtrl">
+      <p>
+        <input type="button" value=" Save " id="btSave" class="ms-ButtonHeightWidth" target="_self" />
+        <input type="button" value=" Cancel " id="btCancel" class="ms-ButtonHeightWidth" target="_self" />
+        <div id="msg" style="color:red;"></div>
+      </p>
+      <p>
+Request Permission
+<input type="button" value="Edit Permission" id="btOpenPermissionEditor" class="ms-ButtonHeightWidth" target="_self"/>
+<div id="permissionEditorContainer" style="position:relative;"
+ng-include="permissionHtmlUrl"></div>
+      </p>
+    </div>
+</body>
+
+</html>

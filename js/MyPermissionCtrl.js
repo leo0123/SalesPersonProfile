@@ -1,3 +1,9 @@
+var myPermissionModel=require("./ParseSql.js");
+var CustomizeExpressionManager=require("./CustomizeExpressionManager.js");
+var Expression=require("./Expression.js");
+var myPermissionModel=require("./MyModel.js");
+var $=require("jquery");
+
 var myPermissionApp = myPermissionApp || {};
 
 myPermissionApp.myPermissionCtrl = function ($scope, $http, $location) {
@@ -16,16 +22,16 @@ myPermissionApp.myPermissionCtrl = function ($scope, $http, $location) {
 
 	function openPermissionEditor() {
 		//theBG = spDepartment.val();
-		if (spDepartment.val() == "") {
+		if (!spDepartment.val()) {
 			$("#msg").text("Department can't be empty");
 			alert("Department can't be empty");
 			return;
 		}
 		$("#permissionEditor").show();
 
-		if (spJSONStr.val() != "") {
+		if (spJSONStr.val()) {
 			setRoot(angular.fromJson(spJSONStr.val()));
-		} else if (spPermission.val() != "") {
+		} else if (spPermission.val()) {
 			try {
 				var helper = new myPermissionModel.ParseSqlHelper();
 				var exp = helper.ParseSql(spPermission.val());
@@ -216,3 +222,5 @@ myPermissionApp.myPermissionCtrl = function ($scope, $http, $location) {
 		event.stopPropagation();
 	};
 };
+
+module.exports=myPermissionApp;
