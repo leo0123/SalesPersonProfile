@@ -13,7 +13,7 @@
         "jquery": "^3.1.1"
     },
     "style": [
-        "./css/my.css",
-        "./node_modules/angular-material/angular-material.css"
+        "./node_modules/angular-material/angular-material.css",
+        "./css/my.css"
     ]
 }

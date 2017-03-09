@@ -5,3 +5,18 @@
 .my-nodisplay {
 	display: none;
 }
+
+button.md-no-style1 {
+    text-transform: initial;
+    min-width: 10px;
+    font-weight: normal;
+    background-color: inherit;
+    text-align: left;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+md-input-container {
+	margin: 0px;
+}

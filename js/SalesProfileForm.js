@@ -1,6 +1,9 @@
+var $ = require("jquery");
+//var myConfig = require("../MyConfig.js");
+
 (function () {
-	var listServer = "http://amdpfwfe02:9999/";
-	var SPUserProfileUrl = listServer + "_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v="; //'delta\username'
+	var listServer = myConfig.listServer;
+	var SPUserProfileUrl = myConfig.SPUserProfileUrl
 	var dataService = "http://amdpfweb02:8080/SAPBW3DataService.svc/";
 	var dataUrlHr = dataService + "VSalesPersonAccount4LoadProfile/";
 	var listUrl = listServer + "_api/web/lists/getbytitle('Sales Person Profile')/items";
@@ -66,7 +69,7 @@
 		$("#btCancel").click(function () {
 			$("[value='Cancel']").click();
 		});
-		
+
 	});
 
 	function getSPUserName() {

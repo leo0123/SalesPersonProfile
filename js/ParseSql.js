@@ -1,8 +1,6 @@
 var Expression=require("./Expression.js");
 
-var myPermissionModel = myPermissionModel || {};
-
-myPermissionModel.ParseSqlHelper = function () {
+ParseSqlHelper = function () {
 	var opEqual = "=";
 	var opLike = "like";
 	var opIn = "in";
@@ -287,4 +285,4 @@ myPermissionModel.ParseSqlHelper = function () {
 	}
 }
 
-module.exports=myPermissionModel;
+module.exports=ParseSqlHelper;

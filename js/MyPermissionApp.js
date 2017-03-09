@@ -5,16 +5,47 @@ var $=require("jquery");
 require("angular-material");
 
 (function () {
-	var app = angular.module('myApp', ['ngMaterial']);
+	var spDomainAccount;
+	var spEmployeeID;
+	var spEmployeeCode;
+	var spSalesP;
+	var spStatus;
+	var spTerminateDate;
+	var spName;
+	var spDepartment;
+	var spCompany;
+	var spEmail;
+	var spOffice;
+	var spPermission;
+
+	$(function(){
+		spDomainAccount = $("[title='Domain Account Required Field']");
+		spEmployeeID = $("[title='Employee ID']");
+		spEmployeeCode = $("[title='Employee Code']");
+		spSalesP = $("[title='SalesP']");
+		spStatus = $("[title='Status']");
+		spTerminateDate = $("[title='Terminate Date']");
+		spName = $("[title='Name Required Field']");
+		spDepartment = $("[title='Department']");
+		spBG = $("[title='BG']");
+		spCompany = $("[title='Company']");
+		spEmail = $("[title='Email']");
+		spOffice = $("[title='Office']");
+		spPermission = $("[title='Permission']");
+		spJSONStr = $("[title='JSONStr']");
+	});
+
+
+	var myApp = angular.module('myApp', ['ngMaterial']);
 	var spDomainAccountTitle = "[title='Domain Account Required Field']";
 
 	function init() {
-		app.controller('myCtrl', myCtrl);
-		app.controller('myPermissionCtrl', myPermissionApp.myPermissionCtrl);
-		app.controller('mySalesOrgCtrl', mySalesOrgCtrl);
-		app.controller('myDivisionCtrl', myDivisionCtrl);
+		myApp.controller('myCtrl', myCtrl);
+		myApp.controller('myPermissionCtrl', myPermissionApp.myPermissionCtrl);
+		myApp.controller('mySalesOrgCtrl', mySalesOrgCtrl);
+		myApp.controller('myDivisionCtrl', myDivisionCtrl);
 		if (isNew()) {
-			app.controller('myDomainAccountCtrl', myDomainAccountCtrl);
+			myApp.controller('myDomainAccountCtrl', myDomainAccountCtrl);
 		}
 	};
 
@@ -55,6 +86,7 @@ require("angular-material");
 		$scope.selectedChanged = function () {
 			var d = $scope.selectedValue;
 			spDomainAccount.val(d.ntaccount);
+			console.log(spEmployeeID);
 			var Race = d.Race;
 			var Emp_Code = d.Emp_Code;
 			var SalesP = d.SalesP;
@@ -104,6 +136,7 @@ require("angular-material");
 				var Office = d.UserProfileProperties.results.find(getOffice).Value;
 				spName.val(Name);
 				spDepartment.val(Department);
+				spBG.val(Department)
 				spCompany.val(Company);
 				spEmail.val(Email);
 				spOffice.val(Office);

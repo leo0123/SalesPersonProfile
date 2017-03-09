@@ -1,6 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-//var CustomizeExpression=require("./js/CustomizeExpression.js");
-//console.log(CustomizeExpression.prototype);
+//browserify SalesPersonProfileIndex.js > SalesPersonProfileBundle.js
 require("./js/MyPermissionApp.js");
 require("./js/SalesProfileForm.js");
 //var myConfig=require("./MyConfig.js");
@@ -334,21 +333,21 @@ function ExpressionManager() {
 module.exports=ExpressionManager;
 
 },{"./Expression.js":4}],6:[function(require,module,exports){
-var myConfig = require("../MyConfig.js");
+//var myConfig = require("../MyConfig.js");
 var myPermissionModel = myPermissionModel || {};
 
 var htmlPath = "../html/";
 //var htmlPath = "../../SitePages/";
 
 myPermissionModel.UrlList = {
-	serviceUrl: "http://amdpfweb02:8080/SAPBW3DataService.svc/",
-	digestUrl: "http://amdpfwfe02:9999/_api/contextinfo",
+	serviceUrl: myConfig.serviceUrl,
+	digestUrl: myConfig.digestUrl,
 	permissionHtmlUrl: myConfig.permissionHtmlUrl,
 	SalesOrgHtmlUrl: myConfig.SalesOrgHtmlUrl,
 	DivisionHtmlUrl: myConfig.DivisionHtmlUrl,
 	DomainAccountHtmlUrl: myConfig.DomainAccountHtmlUrl,
-	listServer: "http://amdpfwfe02:9999/",
-	SPUserProfileUrl: "http://amdpfwfe02:9999/_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v=" //'delta\username'
+	listServer: myConfig.listServer,
+	SPUserProfileUrl: myConfig.SPUserProfileUrl
 };
 
 myPermissionModel.OptionManager = function () {
@@ -518,7 +517,7 @@ myPermissionModel.OptionManager = function () {
 
 module.exports=myPermissionModel;
 
-},{"../MyConfig.js":"/MyConfig.js"}],7:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var myPermissionApp=require("./MyPermissionCtrl.js");
 var myPermissionModel=require("./MyModel.js");
 var angular=require("angular");
@@ -526,6 +525,36 @@ var $=require("jquery");
 require("angular-material");
 
 (function () {
+	var spDomainAccount;
+	var spEmployeeID;
+	var spEmployeeCode;
+	var spSalesP;
+	var spStatus;
+	var spTerminateDate;
+	var spName;
+	var spDepartment;
+	var spCompany;
+	var spEmail;
+	var spOffice;
+	var spPermission;
+
+	$(function(){
+		spDomainAccount = $("[title='Domain Account Required Field']");
+		spEmployeeID = $("[title='Employee ID']");
+		spEmployeeCode = $("[title='Employee Code']");
+		spSalesP = $("[title='SalesP']");
+		spStatus = $("[title='Status']");
+		spTerminateDate = $("[title='Terminate Date']");
+		spName = $("[title='Name Required Field']");
+		spDepartment = $("[title='Department']");
+		spCompany = $("[title='Company']");
+		spEmail = $("[title='Email']");
+		spOffice = $("[title='Office']");
+		spPermission = $("[title='Permission']");
+		spJSONStr = $("[title='JSONStr']");
+	});
+	
+
 	var myApp = angular.module('myApp', ['ngMaterial']);
 	var spDomainAccountTitle = "[title='Domain Account Required Field']";
 
@@ -576,6 +605,7 @@ require("angular-material");
 		$scope.selectedChanged = function () {
 			var d = $scope.selectedValue;
 			spDomainAccount.val(d.ntaccount);
+			console.log(spEmployeeID);
 			var Race = d.Race;
 			var Emp_Code = d.Emp_Code;
 			var SalesP = d.SalesP;
@@ -1253,10 +1283,11 @@ module.exports=ParseSqlHelper;
 
 },{"./Expression.js":4}],10:[function(require,module,exports){
 var $ = require("jquery");
+//var myConfig = require("../MyConfig.js");
 
 (function () {
-	var listServer = "http://amdpfwfe02:9999/";
-	var SPUserProfileUrl = listServer + "_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v="; //'delta\username'
+	var listServer = myConfig.listServer;
+	var SPUserProfileUrl = myConfig.SPUserProfileUrl
 	var dataService = "http://amdpfweb02:8080/SAPBW3DataService.svc/";
 	var dataUrlHr = dataService + "VSalesPersonAccount4LoadProfile/";
 	var listUrl = listServer + "_api/web/lists/getbytitle('Sales Person Profile')/items";

@@ -1,1368 +1,445 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-//var CustomizeExpression=require("./js/CustomizeExpression.js");
-//console.log(CustomizeExpression.prototype);
-require("./js/MyPermissionApp.js");
-require("./js/SalesProfileForm.js");
-//var myConfig=require("./MyConfig.js");
-//console.log(myConfig.permissionHtmlUrl);
-
-},{"./js/MyPermissionApp.js":7,"./js/SalesProfileForm.js":10}],2:[function(require,module,exports){
-var Expression = require("./Expression.js");
-
-function CustomizeExpression(field) {
-	Expression.call(this);
-
-	this.setGroup();
-	this.Field = field;
-	//this.GroupLogic = " and ";
-
-	var currentChild = null;
-
-	this.getChildGroup = function (field) {
-		if (currentChild != null && currentChild.Field == field) {
-			return currentChild;
-		}
-		if (this.Field == 'root') {
-			for (var i = 0; i < this.Children.length; i++) {
-				var child = this.Children[i];
-				if (child.IsGroup == true && child.Field == field) {
-					currentChild = child;
-					return child;
-				}
-			}
-		}
-		return null;
-	}
-
-	this.createChildGroup = function (field) {
-		var childGroup = new CustomizeExpression(field);
-		this.addChild(childGroup);
-		currentChild = childGroup;
-		return childGroup;
-	}
-}
-
-CustomizeExpression.prototype = Object.create(Expression.prototype);
-
-CustomizeExpression.prototype.constructor = CustomizeExpression;
-
-module.exports=CustomizeExpression;
-
-},{"./Expression.js":4}],3:[function(require,module,exports){
-var ExpressionManager=require("./ExpressionManager.js");
-var CustomizeExpression=require("./CustomizeExpression.js");
-
-function CustomizeExpressionManager() {
-	ExpressionManager.call(this);
-
-	//var self = this;
-	var expR;
-	this.newRoot = function () {
-		expR = new CustomizeExpression('root');
-		expR.GroupLogic = " and ";
-	};
-	this.newRoot();
-	//expR.setGroup();
-	//expR.Field = 'root';
-	this.setRoot = function (jsonObject) {
-		expR = new CustomizeExpression('root');
-		expR.GroupLogic = " and ";
-		expR.CopyFrom(jsonObject, null);
-	};
-	this.tryParse = function (lists) {
-		if (expR.Field != 'root' || expR.IsGroup != true) {
-			return
-		} else {
-			for (var i = 0; i < expR.Children.length; i++) {
-				var group = expR.Children[i];
-				if (group.IsGroup == false || group.GroupLogic != ' or ') {
-					continue;
-				} else {
-					var list = tryParseList(group);
-					if (list != null) {
-						fillList(group, list, lists);
-					}
-				}
-			}
-		}
-	};
-	fillList = function (group, list, lists) {
-		var selectedList;
-		switch (group.Field) {
-		case 'BG':
-			selectedList = lists.selectedBG;
-			break;
-		case 'ProfitCenter':
-			selectedList = lists.selectedProfitCenter;
-			break;
-		case 'SalesP':
-			selectedList = lists.selectedSalesP;
-			break;
-		case '[End Customer]':
-			selectedList = lists.selectedEndCustomer;
-			break;
-		case 'CustName':
-			selectedList = lists.selectedSoldToCustomer;
-			break;
-		case 'Office':
-			selectedList = lists.selectedOffice;
-			break;
-		case '[Sales Office]':
-			selectedList = lists.selectedSalesOffice;
-			break;
-		case '[Sales Type]':
-			selectedList = lists.selectedSalesType;
-			break;
-		}
-		for (var i = 0; i < list.length; i++) {
-			selectedList.push(list[i]);
-		}
-	};
-	tryParseList = function (group) {
-		var list = [];
-		for (var i = 0; i < group.Children.length; i++) {
-			var child = group.Children[i];
-			if (child.IsGroup == true || child.Field != group.Field) {
-				return;
-			} else {
-				list.push(child.Value);
-			}
-		}
-		return list;
-	};
-
-	this.getRoot = function () {
-		return expR;
-	};
-	this.getNewRoot = function () {
-		this.newRoot();
-		return expR;
-	};
-
-	this.addInGroup = function (field, value, operation) {
-		var group = expR.getChildGroup(field);
-		if (group == null) {
-			group = expR.createChildGroup(field);
-		}
-		this.add(group, field, value, operation);
-	};
-
-	this.clearGroup = function (field) {
-		var group = expR.getChildGroup(field);
-		if (group != null) {
-			group.Children = [];
-		}
-	}
-}
-
-CustomizeExpressionManager.prototype = Object.create(ExpressionManager.prototype);
-
-CustomizeExpressionManager.prototype.constructor = CustomizeExpressionManager;
-
-module.exports=CustomizeExpressionManager;
-
-},{"./CustomizeExpression.js":2,"./ExpressionManager.js":5}],4:[function(require,module,exports){
-function Expression() {
-	this.IsGroup = true;
-	var Parent = null;
-	this.getParent = function () {
-		return Parent;
-	};
-	this.setParent = function (e) {
-		Parent = e;
-	};
-
-	//FIELD VALUE
-	this.Field = "";
-	this.Value = "";
-	this.Operation = "";
-	//FIELD VALUE
-
-	//GROUP
-	this.GroupLogic = " or ";
-	this.Children = [];
-	//GROUP
-};
-
-//Expression.prototype.getParent = function () {
-//    return Parent;
-//};
-//Expression.prototype.setParent = function (e) {
-//    Parent = e;
-//};
-
-//GROUP
-Expression.prototype.setGroup = function () {
-	this.GroupLogic = " or ";
-	this.IsGroup = true;
-	this.Field = null;
-	this.Value = null;
-	this.Operation = null;
-	this.Children = [];
-};
-Expression.prototype.addChild = function (exp) {
-	this.Children.push(exp);
-	exp.setParent(this);
-};
-Expression.prototype.insertChild = function (leftExp, rightExp) {
-	var i = this.Children.indexOf(leftExp);
-	this.Children.splice(i + 1, 0, rightExp);
-	rightExp.setParent(this);
-};
-Expression.prototype.changeGroupLogic = function () {
-	if (this.getParent().GroupLogic == " and ") {
-		this.getParent().GroupLogic = " or ";
-	} else {
-		this.getParent().GroupLogic = " and ";
-	}
-};
-Expression.prototype.getGroupLogic = function () {
-	if (this.getParent().Children.indexOf(this) == 0) {
-		return "";
-	} else {
-		return this.getParent().GroupLogic;
-	}
-};
-Expression.prototype.getChildren = function () {
-	return this.Children;
-};
-Expression.prototype.removeChild = function (exp) {
-	var i = this.Children.indexOf(exp);
-	this.Children.splice(i, 1);
-	exp.setParent(null);
-};
-//GROUP
-
-//FIELD VALUE
-Expression.prototype.setFieldValue = function (field, value, operation) {
-	this.Field = field;
-	this.Value = value;
-	this.Operation = operation;
-	this.IsGroup = false;
-	this.GroupLogic = "";
-	this.Children = null;
-};
-Expression.prototype.removeSelf = function () {
-	this.getParent().removeChild(this);
-};
-//FIELD VALUE
-
-Expression.prototype.ToString = function () {
-	if (!this.IsGroup) {
-		return this.Field + " " + this.Operation + " " + this.Value;
-	} else {
-		var value = "";
-		for (var i = 0; i < this.Children.length; i++) {
-			var child = this.Children[i];
-			if (value == "") {
-				value = child.ToString();
-			} else {
-				value += this.GroupLogic + child.ToString();
-			}
-		}
-		return "(" + value + ")";
-	}
-};
-
-Expression.prototype.CopyFrom = function (e, parent) {
-	this.IsGroup = e.IsGroup;
-	this.Field = e.Field;
-	this.Value = e.Value;
-	this.Operation = e.Operation;
-	this.GroupLogic = e.GroupLogic;
-	this.setParent(parent);
-	if (e.IsGroup) {
-		for (var i = 0; i < e.Children.length; i++) {
-			var e1 = e.Children[i];
-			var ex = new Expression();
-			ex.CopyFrom(e1, this);
-			this.Children.push(ex);
-		}
-	}
-	return this;
-};
-
-module.exports=Expression;
-
-},{}],5:[function(require,module,exports){
-var Expression=require("./Expression.js");
-
-function ExpressionManager() {
-	//var expT = new CustomizeExpression();
-	//var testaa = expT.getChildGroup('BG');
-	var expR = new Expression();
-	expR.setGroup();
-	this.setRoot = function (jsonObject) {
-		expR = new Expression();
-		expR.setGroup();
-		expR.CopyFrom(jsonObject, null);
-	};
-	this.getRoot = function () {
-		return expR;
-	};
-	this.add = function (group, field, value, operation) {
-		var newExp = new Expression();
-		newExp.setFieldValue(field, value, operation);
-		group.addChild(newExp);
-		return newExp;
-	};
-	this.addGroup = function (leftGroup, field, value, operation) {
-		var newExp = new Expression();
-		newExp.setFieldValue(field, value, operation);
-		if (leftGroup.getParent() == null) {
-			var parent = new Expression();
-			parent.setGroup();
-			var rightGroup = new Expression();
-			rightGroup.setGroup();
-			rightGroup.addChild(newExp);
-			parent.addChild(leftGroup);
-			parent.addChild(rightGroup);
-			expR = parent;
-		} else {
-			var parent = leftGroup.getParent();
-			var rightGroup = new Expression();
-			rightGroup.setGroup();
-			rightGroup.addChild(newExp);
-			//parent.addChild(rightGroup);//should be change to insertAfter(index)
-			parent.insertChild(leftGroup, rightGroup);
-			expR = parent;
-		}
-		return newExp;
-	};
-};
-
-module.exports=ExpressionManager;
-
-},{"./Expression.js":4}],6:[function(require,module,exports){
-var myConfig = require("../MyConfig.js");
-var myPermissionModel = myPermissionModel || {};
-
-var htmlPath = "../html/";
-//var htmlPath = "../../SitePages/";
-
-myPermissionModel.UrlList = {
-	serviceUrl: "http://amdpfweb02:8080/SAPBW3DataService.svc/",
-	digestUrl: "http://amdpfwfe02:9999/_api/contextinfo",
-	permissionHtmlUrl: myConfig.permissionHtmlUrl,
-	SalesOrgHtmlUrl: myConfig.SalesOrgHtmlUrl,
-	DivisionHtmlUrl: myConfig.DivisionHtmlUrl,
-	DomainAccountHtmlUrl: myConfig.DomainAccountHtmlUrl,
-	listServer: "http://amdpfwfe02:9999/",
-	SPUserProfileUrl: "http://amdpfwfe02:9999/_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v=" //'delta\username'
-};
-
-myPermissionModel.OptionManager = function () {
-	var self = this;
-
-	this.TypeList = {
-		BG: "BG",
-		//SalesP: "SalesP",
-		DomainAccount: "DomainAccount",
-		Office: "Office",
-		SalesOffice: "[Sales Office]",
-		SalesType: "[Sales Type]",
-		ProfitCenter: "ProfitCenter",
-		EndCustomer: "[End Customer]",
-		SoldToCustomer: "CustName"
-	};
-
-	this.isSalesP=function(field){
-		if (field.toLowerCase()=="salesp"){
-			return true;
-		} else {
-			return false;
-		}
-	};
-
-	this.OperationList = ["=", "like"];
-
-	var optionLists = {};
-	(function initOptionLists() {
-		for (var key in self.TypeList) {
-			optionLists[key] = [];
-		}
-	})();
-
-	this.getStandardField = function (field) {
-		for (var key in self.TypeList) {
-			if (field.toLowerCase() == self.TypeList[key].toLowerCase()) {
-				return self.TypeList[key];
-			}
-		}
-		return field
-	};
-	this.getType = function (field) {
-		for (var key in self.TypeList) {
-			if (field.toLowerCase() == self.TypeList[key].toLowerCase()) {
-				return key;
-			}
-		}
-		throw "unknown field";
-	};
-
-	/*this.getList = function (type) {
-	return optionLists[type];
-	};*/
-
-	function cacheList(type, list) {
-		optionLists[type] = list;
-	};
-
-	var serviceUrl = myPermissionModel.UrlList.serviceUrl;
-	var queryList = [];
-
-	var theBG;
-	var http;
-	var scope;
-	var viewSuffix;
-	var needInit = true;
-	this.init = function (_theBG, _http, _scope, _viewSuffix) {
-		if (needInit) {
-			theBG = _theBG;
-			http = _http;
-			scope = _scope;
-			viewSuffix = _viewSuffix;
-			needInit = false;
-		}
-	}
-
-	function getFilter(type, theBG, partValue) {
-		type = self.TypeList[type];
-		var filter;
-		if (type == self.TypeList.ProfitCenter) {
-			filter = "BG eq '" + theBG + "'";
-		} else if (type == self.TypeList.EndCustomer) {
-			filter = "BG eq '" + theBG + "'";
-		} else if (type == self.TypeList.SoldToCustomer) {
-			//filter = "BG eq '" + theBG + "'";
-			filter = "";
-		} else {
-			filter = "";
-		}
-		if (partValue) {
-			filter += filter ? " and " : "";
-			filter += "indexof(Value, '" + partValue + "') ge 0"
-		}
-		filter = filter ? "?$filter=" + filter : "";
-		return filter;
-	};
-
-	var errorCount = 0;
-	function load1Option() {
-		if (queryList.length == 0) {
-			return;
-		}
-		var type = queryList[0].type;
-		var filter = getFilter(type, theBG, queryList[0].partValue);
-		var urlStr = serviceUrl + "vDim" + type + "4SalesProfile" + filter;
-		http({
-			method: "GET",
-			url: urlStr,
-			headers: {
-				'Content-Type': 'application/json; charset=utf-8'
-			}
-		}).then(function mySucces(response) {
-			var item = queryList.shift();
-			cacheList(item.type, response.data.d);
-			if (optionLists[item.type].length) {
-				scope[item.viewName] = optionLists[item.type];
-				if (item.callBack) {
-					item.callBack();
-				}
-			}
-			load1Option();
-		}, function myError(response) {
-			var item = queryList.shift();
-			errorCount++;
-			if (errorCount < 99) {
-				queryList.push(item);
-			} else {
-				errorCount = 0;
-			}
-			load1Option();
-		});
-	};
-
-	function putIntoQueue(_type, _viewName, _partValue, _callBack) {
-		queryList.push({
-			type: _type,
-			partValue: _partValue,
-			viewName: _viewName,
-			callBack: _callBack
-		});
-		if (queryList.length == 1) {
-			load1Option();
-		}
-	}
-
-	this.tryToGetOption = function (_type, _isCommon, _partValue, _callBack) {
-		if (needInit) {
-			log("need init to get option");
-			return;
-		}
-		var _viewName = _isCommon ? "commonList" : _type + viewSuffix;
-		if (_partValue) {
-			putIntoQueue(_type, _viewName, _partValue, _callBack);
-			return;
-		}
-		if (optionLists[_type].length) {
-			scope[_viewName] = optionLists[_type];
-			if (_callBack) {
-				_callBack();
-			}
-		} else {
-			putIntoQueue(_type, _viewName, _partValue, _callBack);
-		}
-	}
-};
-
-module.exports=myPermissionModel;
-
-},{"../MyConfig.js":"/MyConfig.js"}],7:[function(require,module,exports){
-var myPermissionApp=require("./MyPermissionCtrl.js");
-var myPermissionModel=require("./MyModel.js");
-var angular=require("angular");
-var $=require("jquery");
-require("angular-material");
-
-(function () {
-	var myApp = angular.module('myApp', ['ngMaterial']);
-	var spDomainAccountTitle = "[title='Domain Account Required Field']";
-
-	function init() {
-		myApp.controller('myCtrl', myCtrl);
-		myApp.controller('myPermissionCtrl', myPermissionApp.myPermissionCtrl);
-		myApp.controller('mySalesOrgCtrl', mySalesOrgCtrl);
-		myApp.controller('myDivisionCtrl', myDivisionCtrl);
-		if (isNew()) {
-			myApp.controller('myDomainAccountCtrl', myDomainAccountCtrl);
-		}
-	};
-
-	function log(str) {
-		console.log(str);
-	};
-
-	function isNew() {
-		if ($(spDomainAccountTitle).val()) {
-			return false
-		} else {
-			return true;
-		}
-	};
-
-	function myCtrl($scope) {
-		//var log = log;
-		$scope.permissionHtmlUrl = myPermissionModel.UrlList.permissionHtmlUrl;
-		$scope.SalesOrgHtmlUrl = myPermissionModel.UrlList.SalesOrgHtmlUrl;
-		$scope.DivisionHtmlUrl = myPermissionModel.UrlList.DivisionHtmlUrl;
-		if (isNew()) {
-			$scope.DomainAccountHtmlUrl = myPermissionModel.UrlList.DomainAccountHtmlUrl;
-		} else {
-			$("#SPDomainAccountContainer").show();
-		}
-		$scope.$on('selectedSalesOrgChanged', function (e, d) {
-			$scope.$broadcast('reloadDivisionOption', d);
-		});
-		$scope.$on('CompanyChanged', function (e, d) {
-			$scope.$broadcast('reloadSalesOrgOption', d);
-		});
-	};
-
-	function myDomainAccountCtrl($scope, $http) {
-		var spDomainAccount = $(spDomainAccountTitle);
-		loadOption();
-
-		$scope.selectedChanged = function () {
-			var d = $scope.selectedValue;
-			spDomainAccount.val(d.ntaccount);
-			var Race = d.Race;
-			var Emp_Code = d.Emp_Code;
-			var SalesP = d.SalesP;
-			var Status = d.Status;
-			var Terminate_Date = d.Terminate_Date;
-			if (Terminate_Date != null) {
-				Terminate_Date = new Date(parseInt(Terminate_Date.substr(6)));
-			}
-
-			spEmployeeID.val(Race);
-			spEmployeeCode.val(Emp_Code);
-			spSalesP.val(SalesP);
-			spStatus.val(Status);
-			spTerminateDate.val(Terminate_Date);
-
-			loadSPUserProfile();
-		};
-
-		function loadOption() {
-			var urlStr = myPermissionModel.UrlList.serviceUrl + "VSalesPersonAccount4LoadProfile/?$filter=ntaccount ne ''";
-			$http({
-				method: "GET",
-				url: urlStr,
-				headers: {
-					'Content-Type': 'application/json; charset=utf-8'
-				}
-			}).then(function mySucces(response) {
-				$scope.Options = response.data.d;
-			}, function myError(response) {});
-		};
-
-		function loadSPUserProfile() {
-			var urlStr = myPermissionModel.UrlList.SPUserProfileUrl + "'delta\\" + spDomainAccount.val() + "'";
-			$http({
-				method: "GET",
-				url: urlStr,
-				headers: {
-					//'Content-Type': 'application/json; charset=utf-8'
-					"accept": "application/json;odata=verbose"
-				}
-			}).then(function mySucces(response) {
-				var d = response.data.d;
-				var Name = d.DisplayName;
-				var Email = d.Email;
-				var Department = d.UserProfileProperties.results.find(getDept).Value;
-				var Company = d.UserProfileProperties.results.find(getCom).Value;
-				var Office = d.UserProfileProperties.results.find(getOffice).Value;
-				spName.val(Name);
-				spDepartment.val(Department);
-				spCompany.val(Company);
-				spEmail.val(Email);
-				spOffice.val(Office);
-				$scope.$emit('CompanyChanged', spCompany.val());
-			}, function myError(response) {});
-
-			function getDept(prop) {
-				return prop.Key == "Department";
-			};
-			function getCom(prop) {
-				return prop.Key == "Company";
-			};
-			function getOffice(prop) {
-				return prop.Key == "Office";
-			};
-		};
-
-	};
-
-	function mySalesOrgCtrl($scope, $http) {
-		var company = $("[title='Company']").val();
-		if (company) {
-			loadOption();
-		}
-		var spSalesOrg = $("[title='Sales Org']");
-		$scope.selectedSalesOrg = spSalesOrg.val().split(",");
-
-		$scope.selectedChanged = function () {
-			spSalesOrg.val($scope.selectedSalesOrg);
-			$scope.$emit('selectedSalesOrgChanged', $scope.selectedSalesOrg);
-		};
-
-		$scope.$on('reloadSalesOrgOption', function (e, d) {
-			loadOption();
-		});
-
-		function loadOption() {
-			company = $("[title='Company']").val();
-			var urlStr = myPermissionModel.UrlList.serviceUrl + "vCompanyOrg4SalesProfile/?$filter=Company eq '" + company + "'";
-			$http({
-				method: "GET",
-				url: urlStr,
-				headers: {
-					'Content-Type': 'application/json; charset=utf-8'
-				}
-			}).then(function mySucces(response) {
-				$scope.SalesOrgOptions = response.data.d;
-			}, function myError(response) {});
-		};
-	};
-
-	function myDivisionCtrl($scope, $http) {
-		var log = log;
-		loadOption();
-		var spDivision = $("[title='Division']");
-		$scope.selectedDivision = spDivision.val().split(",");
-
-		$scope.selectedChanged = function () {
-			spDivision.val($scope.selectedDivision);
-		};
-
-		$scope.$on('reloadDivisionOption', function (e, d) {
-			loadOption();
-		});
-
-		function loadOption() {
-			var SalesOrg = $("[title='Sales Org']").val();
-			if (!SalesOrg) {
-				$scope.DivisionOptions = null;
-				return;
-			}
-			var orgList = SalesOrg.split(",");
-			var filter;
-			for (var org in orgList) {
-				if (filter) {
-					filter += " or SalesOrg eq '" + orgList[org] + "'";
-				} else {
-					filter = "SalesOrg eq '" + orgList[org] + "'";
-				}
-			}
-			var urlStr = myPermissionModel.UrlList.serviceUrl + "vSalesOrgDivision4SalesProfile/?$filter=" + filter
-				 + "&&$orderby=Division";
-			$http({
-				method: "GET",
-				url: urlStr,
-				headers: {
-					'Content-Type': 'application/json; charset=utf-8'
-				}
-			}).then(function mySucces(response) {
-				$scope.DivisionOptions = distinctList(response.data.d);
-			}, function myError(response) {});
-		};
-
-		function distinctList(oList) {
-			var tList = [];
-			for (var i in oList) {
-				if (!tList.includes(oList[i].Division)) {
-					tList.push(oList[i].Division);
-				}
-			}
-			return tList;
-		};
-	};
-
-	init();
-})();
-
-},{"./MyModel.js":6,"./MyPermissionCtrl.js":8,"angular":18,"angular-material":16,"jquery":19}],8:[function(require,module,exports){
-var myPermissionModel = require("./ParseSql.js");
-var CustomizeExpressionManager = require("./CustomizeExpressionManager.js");
-var Expression = require("./Expression.js");
-var myPermissionModel = require("./MyModel.js");
+//parcelify AdjustmentIndex.js -c AdjustmentBundle.css
+//browserify AdjustmentIndex.js > AdjustmentBundle.js
+require("./js/Adjustment.js");
+
+},{"./js/Adjustment.js":2}],2:[function(require,module,exports){
+var angular = require("angular");
 var $ = require("jquery");
-var ParseSqlHelper = require("./ParseSql.js");
+require("angular-material");
+var myUtility = require("./Utility.js");
 
-var myPermissionApp = myPermissionApp || {};
+var myFormUrl = '../../SitePages/MyAdjustmentForm.html';
+var listServer = "http://amdpfwfe02:9999/";
+var dataService = "http://amdpfweb02:8080/SAPBW3DataService.svc/";
+var currentUserUrl = listServer + "_api/SP.UserProfiles.PeopleManager/GetMyProperties";
+//var profileListUrl = listServer + "_api/web/lists/getbytitle('Sales Person Profile')/items";
+var profileListUrl = dataService + "vSalesPersonProfile";
+var dataUrl = dataService + "getActualBudget";
 
-myPermissionApp.myPermissionCtrl = function($scope, $http, $location) {
-    //var log = myPermissionApp.log;
-    var expM = new CustomizeExpressionManager();
-    var currentExp;
-    var currentGroup;
-    var dialogStatus = 'status';
-    var spPermission = $("[title='Permission']");
-    var spJSONStr = $("[title='JSONStr']");
-    var spDepartment = $("[title='Department']");
-    //var theBG = spDepartment.val();
-    var serviceUrl = myPermissionModel.UrlList.serviceUrl;
-    $scope.expRoot = expM.getRoot();
-    $scope.OptionManager = new myPermissionModel.OptionManager();
+var spFields = {};
 
-    function openPermissionEditor() {
-        //theBG = spDepartment.val();
-        if (!spDepartment.val()) {
-            $("#msg").text("Department can't be empty");
-            alert("Department can't be empty");
-            return;
-        }
-        $("#permissionEditor").show();
+var myApp = angular.module('myApp', ['ngMaterial']);
+myApp.controller("myPreCtrl", function($scope) {
+    $scope.myFormReady = function() {
+      
+    };
+    $scope.myFormUrl = myFormUrl;
+});
+myApp.controller("myCtrl", function($scope, $http) {
+    var msg;
 
-        if (spJSONStr.val()) {
-            setRoot(angular.fromJson(spJSONStr.val()));
-        } else if (spPermission.val()) {
-            try {
-                var helper = new ParseSqlHelper();
-                var exp = helper.ParseSql(spPermission.val());
-                if (exp != null) {
-                    var r = new Expression();
-                    r.IsGroup = true;
-                    r.Children.push(exp);
-                    var o = angular.fromJson(angular.toJson(r));
-                    setRoot(o);
-                } else {
-                    $scope.msg = "can't parse original permission, please contact IT or create new permission";
+    $scope.notAdmin = true;
+
+    spFields.BG = $("[title='BG Required Field']");
+    spFields.Company = $("[title='Company Required Field']");
+    spFields.SalesPerson = $("[title='Sales Person']");
+    spFields.EndCustomer = $("[title='End Customer']");
+    spFields.Material = $("[title='Material']");
+    spFields.ProfitCenter = $("[title='Profit Center']");
+    spFields.Year = $("[title='Year']");
+    spFields.NewSalesPerson = $("[title='New Sales Person']");
+    spFields.NewEndCustomer = $("[title='New End Customer']");
+    spFields.NewMaterial = $("[title='New Material']");
+    spFields.YearMonth = $("[title='Effective Year Month Required Field']");
+    spFields.ApprovalStatus = $("[title='Approval Status']");
+    const isNew = $("#myFormType").text() == "new" ? true : false;
+
+    var urlParams = {};
+    urlParams.BG = myUtility.getParam("BG");
+    urlParams.Company = myUtility.getParam("Company");
+    urlParams.Account = myUtility.getParam("Account");
+    urlParams.Customer = myUtility.getParam("Customer");
+
+    /*$scope.myFormReady = function() {
+        load();
+
+        $("#btSave").click(function() {
+            $("[value='Save']:first").click();
+        });
+
+        $("#btCancel").click(function() {
+            $("[value='Cancel']").click();
+        });
+
+        $("#btSearch").click(function() {
+            $scope.searchActualBudget();
+        });
+    };*/
+    load();
+
+    $("#btSave").click(function() {
+        $("[value='Save']:first").click();
+    });
+
+    $("#btCancel").click(function() {
+        $("[value='Cancel']").click();
+    });
+
+    $("#btSearch").click(function() {
+        $scope.searchActualBudget();
+    });
+    //$scope.myFormUrl = myFormUrl;
+
+    function load() {
+        msg = $("#msg");
+        if (isNew) {
+            $http({
+                method: "GET",
+                url: currentUserUrl,
+                headers: {
+                    "accept": "application/json;odata=verbose"
                 }
-            } catch (e) {
-                $scope.msg = "can't parse original permission, please contact IT or create new permission";
-            }
+            }).then(function mySuccess(response) {
+                var d = response.data.d.UserProfileProperties.results.find(getDept).Value;
+                if (d == "IT") {
+                    $scope.notAdmin = false;
+                    msg.text("Hi admin, please input BG and Company");
+                    setCompany("DPC");
+                }
+                var c = response.data.d.UserProfileProperties.results.find(getCom).Value;
+                if (c == "ALI") {
+                    c = "DPC";
+                }
+                if ($scope.notAdmin) {
+                    setBG(d);
+                    //$scope.BG = d;
+                    //spFields.BG = d;
+                    setCompany(c);
+                    //$scope.Company = c;
+                    //spFields.Company = c;
+                    //loadOption();
+                }
+            }, function myError(response) {
+                msg.text(response.status);
+            });
+            $scope.selectedYear = "2016";
+            spFields.Year.val("2016");
+            $scope.selectedMonth = "01";
+            spFields.YearMonth.val("201601");
         } else {
-            $scope.expRoot = expM.getNewRoot();
-        }
-        $scope.$apply();
-    };
-    $("#btOpenPermissionEditor").click(openPermissionEditor);
-
-    $scope.resetExpRoot = function() {
-        $scope.expRoot = expM.getNewRoot();
-    };
-
-    $scope.btPermissionOKClick = function() {
-        spJSONStr.val(angular.toJson(expM.getRoot()));
-        spPermission.val(expM.getRoot().ToString());
-        $("#permissionEditor").hide();
-    };
-    $scope.btPermissionCancelClick = function() {
-        $("#permissionEditor").hide();
-    };
-
-    function setRoot(jsonObject) {
-        expM.setRoot(jsonObject);
-        $scope.expRoot = expM.getRoot();
-        //$scope.$apply();
-    };
-
-    $scope.delayLoadOption = function(type) {
-        $scope.OptionManager.init(spDepartment.val(), $http, $scope, "Options");
-        $scope.OptionManager.tryToGetOption(type, false, "");
-    };
-
-    $scope.inputChanged = function(type) {
-        if ($scope["input" + type].length == 2) {
-            $scope.OptionManager.tryToGetOption(type, false, $scope["input" + type]);
-        }
-    };
-
-    $scope.selectedChanged = function(field) {
-        var list = null;
-        if (field == $scope.OptionManager.TypeList.BG) {
-            list = $scope.selectedBG;
-        } else if (field == $scope.OptionManager.TypeList.ProfitCenter) {
-            list = $scope.selectedProfitCenter;
-        } else if (field == $scope.OptionManager.TypeList.DomainAccount) {
-            list = $scope.selectedDomainAccount;
-        } else if (field == $scope.OptionManager.TypeList.EndCustomer) {
-            list = $scope.selectedEndCustomer;
-        } else if (field == $scope.OptionManager.TypeList.SoldToCustomer) {
-            list = $scope.selectedSoldToCustomer;
-        } else if (field == $scope.OptionManager.TypeList.Office) {
-            list = $scope.selectedOffice;
-        } else if (field == $scope.OptionManager.TypeList.SalesOffice) {
-            list = $scope.selectedSalesOffice;
-        } else if (field == $scope.OptionManager.TypeList.SalesType) {
-            list = $scope.selectedSalesType;
-        }
-
-        expM.clearGroup(field);
-        for (var i = 0; i < list.length; i++) {
-            var value = "'" + list[i] + "'";
-            expM.addInGroup(field, value, "=");
-        }
-    };
-
-    $scope.addInGroup = function(group) {
-        currentGroup = group;
-        dialogStatus = "addInGroup";
-        showPanel();
-    };
-    $scope.addGroup = function(group) {
-        currentGroup = group;
-        dialogStatus = "addGroup";
-        showPanel();
-    };
-    $scope.changeGroupLogic = function(exp) {
-        exp.changeGroupLogic();
-    };
-
-    $scope.openSingleEditor = function(exp) {
-        currentExp = exp;
-        exp.Field = $scope.OptionManager.getStandardField(exp.Field);
-
-        $scope.singleField = exp.Field;
-        $scope.singleValue = exp.Value.replace(/'/g, "");
-        $scope.singleOperation = exp.Operation.replace(/ /g, "");
-
-        dialogStatus = "edit";
-        if (exp.Field == $scope.OptionManager.TypeList.EndCustomer ||
-            exp.Field == $scope.OptionManager.TypeList.SoldToCustomer) {
-            $scope.inputCommon = $scope.singleValue
-        }
-        showPanel();
-    };
-
-    $scope.selectedSingleFieldChanged = function(field) {
-        $scope.singleValue = "";
-        searchCommon();
-    };
-
-    function showPanel() {
-        $("#setFieldValueContainer").show();
-        $scope.singleOperation = $scope.singleOperation ? $scope.singleOperation : "=";
-        searchCommon();
-        //$scope.$apply();
-    };
-
-    $scope.inputCommonChanged = function() {
-        searchCommon();
-    };
-
-    function searchCommon() {
-        if ($scope.singleField) {
-            if (!$scope.OptionManager.isSalesP($scope.singleField)) {
-                var type = $scope.OptionManager.getType($scope.singleField);
-                $scope.OptionManager.tryToGetOption(type, true, "");
-            } else {
-                $scope.OptionManager.tryToGetOption($scope.OptionManager.TypeList.DomainAccount, true, "", optionLoaded);
+            setBG(spFields.BG.val());
+            setCompany(spFields.Company.val());
+            //$scope.BG = spFields.BG.val();
+            //$scope.Company = spFields.Company.val();
+            //loadOption();
+            $scope.selectedSalesPerson = spFields.SalesPerson.val();
+            $scope.selectedEndCustomer = spFields.EndCustomer.val();
+            $scope.selectedMaterial = spFields.Material.val();
+            $scope.selectedProfitCenter = spFields.ProfitCenter.val();
+            $scope.selectedYear = spFields.Year.val();
+            $scope.selectedNewSalesPerson = spFields.NewSalesPerson.val();
+            $scope.selectedNewEndCustomer = spFields.NewEndCustomer.val();
+            $scope.selectedNewMaterial = spFields.NewMaterial.val();
+            $scope.selectedMonth = spFields.YearMonth.val().substring(4, 6);
+            if (spFields.ApprovalStatus.val() == "Approved" || spFields.ApprovalStatus.val() == "Pending") {
+                msg.text("The status is " + spFields.ApprovalStatus.val() + ", can't be edited.");
+                $("#btSave").prop("disabled", true);
             }
         }
     };
 
-    function optionLoaded() {
-        if ($scope.OptionManager.isSalesP($scope.singleField)) {
-            $scope.singleField = $scope.OptionManager.TypeList.DomainAccount;
-            $scope.singleValue = $scope.commonList.find(function(item) {
-                return item.SalesP.toLowerCase() == $scope.singleValue.toLowerCase();
-            }).Value;
+    function setBG(value) {
+        spFields.BG.val(value);
+        $scope.BG = value;
+        loadOption();
+    };
+
+    function setCompany(value) {
+        spFields.Company.val(value);
+        $scope.Company = value;
+        loadOption();
+    };
+
+    console.log($scope);
+    $scope.selectedChanged = function(field) {
+        if (field == "SalesPerson") {
+            spFields.SalesPerson.val($scope.selectedSalesPerson);
+        } else if (field == "EndCustomer") {
+            spFields.EndCustomer.val($scope.selectedEndCustomer);
+        } else if (field == "Material") {
+            spFields.Material.val($scope.selectedMaterial);
+        } else if (field == "ProfitCenter") {
+            spFields.ProfitCenter.val($scope.selectedProfitCenter);
+        } else if (field == "NewSalesPerson") {
+            spFields.NewSalesPerson.val($scope.selectedNewSalesPerson);
+        } else if (field == "NewEndCustomer") {
+            spFields.NewEndCustomer.val($scope.selectedNewEndCustomer);
+        } else if (field == "NewMaterial") {
+            spFields.NewMaterial.val($scope.selectedNewMaterial);
+        } else if (field == "Year") {
+            spFields.Year.val($scope.selectedYear);
+            spFields.YearMonth.val(spFields.Year.val() + $scope.selectedMonth);
+        } else if (field == "YearMonth") {
+            spFields.YearMonth.val(spFields.Year.val() + $scope.selectedMonth);
         }
     };
 
-    $scope.btSetFieldValueOKClick = function() {
-        if (!($scope.singleField && $scope.singleOperation && $scope.singleValue)) {
+    function setList(type, list) {
+        if (type == "EndCustomer") {
+            $scope.EndCustomers = list;
+        } else if (type == "Material") {
+            $scope.Materials = list;
+        } else if (type == "ProfitCenter") {
+            $scope.ProfitCenters = list;
+        } else if (type == "NewEndCustomer") {
+            $scope.NewEndCustomers = list;
+        } else if (type == "NewMaterial") {
+            $scope.NewMaterials = list;
+        }
+    };
+
+    $scope.inputChanged = function(value, type) {
+        if (type == "BG") {
+            setBG(value);
             return;
         }
-        var value = "'" + $scope.singleValue + "'";
-        var operation = $scope.singleOperation;
-        if (operation == "like") {
-            operation = " " + operation + " ";
-            //value = "'" + $scope.singleValue + "'";
+        if (type == "Company") {
+            setCompany(value);
+            return;
         }
-        if (dialogStatus == "addInGroup") {
-            expM.add(currentGroup, $scope.singleField, value, operation);
-        } else if (dialogStatus == "edit") {
-            currentExp.setFieldValue($scope.singleField, value, operation);
-        } else if (dialogStatus == "addGroup") {
-            expM.addGroup(currentGroup, $scope.singleField, value, operation);
-            $scope.expRoot = expM.getRoot();
-        }
-        $("#setFieldValueContainer").hide();
-        $scope.inputCommon = "";
-    };
-    $scope.btSetFieldValueCancelClick = function() {
-        $("#setFieldValueContainer").hide();
-        $scope.inputCommon = "";
-    };
+        //return;
 
-    $scope.previousTab = function() {
-        if ($scope.selectedTabIndex > 0) {
-            $scope.selectedTabIndex = $scope.selectedTabIndex - 1;
-        }
-    };
-    $scope.nextTab = function() {
-        if ($scope.selectedTabIndex < 7) {
-            $scope.selectedTabIndex = $scope.selectedTabIndex + 1;
-        }
-    };
-
-    $scope.openMenu = function($mdOpenMenu, $event) {
-        $mdOpenMenu($event);
+        if (value.length >= 1) {
+            var field = type;
+            if (field.startsWith("New")) {
+                field = field.substring(3, field.length);
+            }
+            var filter = "indexof(" + field + ", '" + value + "') ge 0";
+            searchOption(filter, type);
+        } else if (value.length < 1) {
+            setList(type, []);
+        };
     };
 
     $scope.onSearchChange = function(event) {
         event.stopPropagation();
     };
+
+    function searchOption(filter, type) {
+        if (filter != '') {
+            filter = " and " + filter;
+        }
+        var view = type;
+        if (view.startsWith("New")) {
+            view = view.substring(3, view.length);
+        }
+        var urlStr = dataService + "v" + view + "4Adjustment?$filter=BG eq '" + spFields.BG.val() + "' and Company eq '" + spFields.Company.val() + "'" + filter;
+        //msg.text(urlStr);
+        $http({
+            method: "GET",
+            url: urlStr,
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        }).then(function mySucces(response) {
+            setList(type, response.data.d);
+        }, function myError(response) {
+            msg.text(response.status);
+        })
+    };
+
+    function loadOptionByType(type) {
+        var view = type;
+        if (view.startsWith("New")) {
+            view = view.substring(3, view.length);
+        }
+        var urlStr = dataService + "v" + view + "4Adjustment?$filter=BG eq '" + spFields.BG.val() + "' and Company eq '" + spFields.Company.val() + "'";
+        //msg.text(urlStr);
+        $http({
+            method: "GET",
+            url: urlStr,
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        }).then(function mySucces(response) {
+            setList(type, response.data.d);
+        }, function myError(response) {
+            msg.text(response.status);
+        })
+    };
+
+    function getDept(prop) {
+        return prop.Key == "Department";
+    };
+
+    function getCom(prop) {
+        return prop.Key == "Company";
+    };
+
+    function loadOption() {
+        if (!(spFields.BG.val() && spFields.Company.val())) {
+            return;
+        }
+        var url = profileListUrl + "?$top=999&$orderby=DomainAccount&$filter=BG eq '" + spFields.BG.val() + "' and Company eq '" + spFields.Company.val() + "'";
+        //msg.text(url);
+        $http({
+            method: "GET",
+            url: url,
+            headers: {
+                "accept": "application/json;odata=verbose"
+            }
+        }).then(function mySucces(response) {
+            $scope.SalesPersons = response.data.d;
+            inputParams();
+        }, function myError(response) {
+            msg.text(response.status + url);
+        });
+        //loadOptionByType("EndCustomer");
+        //loadOptionByType("Material");
+        //loadOptionByType("ProfitCenter");
+    };
+
+    function inputParams() {
+        if (!(urlParams.BG && urlParams.Company)) {
+            return;
+        }
+        msg.text("");
+        if (urlParams.BG != $scope.BG || urlParams.Company != $scope.Company) {
+            if ($scope.notAdmin) {
+                msg.text("BG or Company not match");
+                return;
+            } else {
+                if (urlParams.BG) {
+                    setBG(urlParams.BG);
+                }
+                if (urlParams.Company) {
+                    setCompany(urlParams.Company);
+                }
+                //$scope.BG = urlParams.BG;
+                //inputChanged($scope.BG,'BG')
+                //$scope.Company = urlParams.Company;
+                //inputChanged($scope.Company,'Company')
+            }
+        }
+        //return;
+        var t = $scope.SalesPersons.find(findDomainAccountByUrlParam);
+        if (t == undefined) {
+            msg.text("Sales Person not find");
+        } else {
+            $scope.selectedSalesPerson = $scope.SalesPersons.find(findDomainAccountByUrlParam).DomainAccount;
+            $scope.selectedChanged('SalesPerson');
+            //alert(spFields.SalesPerson.val());
+        }
+        $scope.inputEndCustomer = urlParams.Customer;
+        $scope.inputChanged($scope.inputEndCustomer, 'EndCustomer');
+        $scope.selectedEndCustomer = urlParams.Customer;
+        $scope.selectedChanged('EndCustomer');
+        //$scope.searchActualBudget();
+    };
+
+    function findDomainAccountByUrlParam(e) {
+        return e.DomainAccount == urlParams.Account;
+    };
+
+    function checkStatus() {
+        if (spFields.ApprovalStatus.val() == "Approved" || spFields.ApprovalStatus.val() == "Pending") {
+            $("#btSave").prop("disabled", true);
+            msg.text("The status is " + spFields.ApprovalStatus.val() + ", can't be edited.");
+            alert(msg.text());
+            return false;
+        }
+        return true;
+    };
+
+    function checkCondition() {
+        if (spFields.SalesPerson.val() == "" && spFields.EndCustomer.val() == "" && spFields.Material.val() == "") {
+            msg.text("Sales Person and End Customer and Material can't be empty at the same time");
+            alert(msg.text());
+            return false;
+        }
+        return true;
+    };
+
+    function checkValue() {
+        if (spFields.NewSalesPerson.val() == "" && spFields.NewEndCustomer.val() == "" && spFields.NewMaterial.val() == "") {
+            msg.text("New Sales Person and New End Customer and New Material can't be empty at the same time");
+            alert(msg.text());
+            return false;
+        }
+        if (spFields.NewEndCustomer.val() != "" && (spFields.EndCustomer.val().toUpperCase() != "OTHERS" || spFields.EndCustomer.val().toUpperCase() != "DISTRIBUTOR OTHERS")) {
+            msg.text("Only allow to change End Customer when End Customer is OTHERS");
+            alert(msg.text());
+            return false;
+        }
+        return true;
+    }
+
+    PreSaveAction = function() {
+        if (!checkStatus()) {
+            return false;
+        }
+        if (!checkCondition()) {
+            return false;
+        }
+        if (!checkValue()) {
+            return false;
+        }
+        return true;
+    };
+
+    $scope.searchActualBudget = function() {
+        msg.text("");
+        $scope.ActualBudget = null;
+        if (checkCondition() == false) {
+            return;
+        }
+
+        $scope.status = "loading";
+        var condition = "Year='" + spFields.Year.val() + "'&BG='" + spFields.BG.val() + "'&Company='" + spFields.Company.val() + "'";
+        if (spFields.SalesPerson.val() != "") {
+            condition += "&SalesPerson='" + spFields.SalesPerson.val() + "'";
+        }
+        if (spFields.EndCustomer.val() != "") {
+            condition += "&EndCustomer='" + spFields.EndCustomer.val() + "'";
+        }
+        if (spFields.Material.val() != "") {
+            condition += "&Material='" + spFields.Material.val() + "'";
+        }
+        if (spFields.ProfitCenter.val() != "") {
+            condition += "&ProfitCenter='" + spFields.ProfitCenter.val() + "'";
+        }
+        $scope.status = "loading:" + condition;
+        $http({
+            method: "GET",
+            url: dataUrl + "?" + condition,
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            }
+        }).then(function mySucces(response) {
+            $scope.ActualBudget = response.data.d;
+            var myDate = new Date();
+            $scope.status = "loaded at " + myDate.toLocaleTimeString();
+        }, function myError(response) {
+            $scope.status = "error:" + condition;
+            alert("error");
+        });
+    };
+});
+
+},{"./Utility.js":3,"angular":11,"angular-material":9,"jquery":12}],3:[function(require,module,exports){
+var myUtility = {};
+myUtility.getParam = function(paramName) {
+    var url = window.location.href;
+    var startIndex = url.indexOf("?");
+    var i = url.indexOf(paramName, startIndex);
+    if (i < 0) {
+        return "";
+    }
+    var j = url.indexOf("&", i);
+    i = i + paramName.length + 1;
+    var param;
+    if (j > 0) {
+        param = url.substring(i, j);
+    } else {
+        param = url.substring(i);
+    }
+    return param;
 };
 
-module.exports = myPermissionApp;
+module.exports = myUtility
 
-},{"./CustomizeExpressionManager.js":3,"./Expression.js":4,"./MyModel.js":6,"./ParseSql.js":9,"jquery":19}],9:[function(require,module,exports){
-var Expression=require("./Expression.js");
-
-ParseSqlHelper = function () {
-	var opEqual = "=";
-	var opLike = "like";
-	var opIn = "in";
-	var opList = [opEqual, opIn, opLike];
-	var comma = ",";
-	var fList = []; //should be lower case
-	var fList1 = ["bg", "salesp", "profitcenter", "office"]; //without []
-	var fList2 = ["[end customer]", "[sales office]", "[sales type]"]; //with []
-	(function fillFieldList() {
-		for (var i = 0; i < fList1.length; i++) {
-			fList.push(fList1[i]);
-		}
-		for (var i = 0; i < fList2.length; i++) {
-			fList.push(fList2[i]);
-		}
-	})();
-	var lgAnd = "and";
-	var lgOr = "or";
-	var lgList = [lgAnd, lgOr];
-	var pValue = "\\'[a-z0-9\\-\\s\\.\\&\\%]*\\'";
-	var pLeft = "(";
-	var pRight = ")";
-
-	var sql;
-	var stack;
-	var status;
-
-	(function test() {
-		//ParseSql("ProfitCenter LIKE 'TAA%'");
-	})();
-
-	function log(str) {
-		console.log(str);
-	};
-
-	function pWord(e) {
-		return "\\b" + e + "\\b";
-	};
-	function nWord(e) {
-		return "\\" + e;
-	};
-	function getReg() {
-		var words = pWord(lgAnd)
-			 + "|" + pWord(lgOr)
-			 + "|" + nWord(pLeft)
-			 + "|" + nWord(pRight)
-			 + "|" + nWord(opEqual)
-			 + "|" + pWord(opLike)
-			 + "|" + pWord(opIn)
-			 + "|" + nWord(comma);
-		for (var i = 0; i < fList1.length; i++) {
-			words += "|" + pWord(fList1[i]);
-		}
-		for (var i = 0; i < fList2.length; i++) {
-			var w = fList2[i];
-			w = w.replace(/\[/, "\\[");
-			w = w.replace(/\]/, "\\]");
-			w = w.replace(/\s/, "\\s");
-			words += "|" + w;
-		}
-		words += "|" + pValue;
-		return words;
-	};
-
-	this.ParseSql = function (oSql) {
-		sql = "(" + oSql + ")";
-		stack = [];
-		var i = 0;
-		var reg = new RegExp(getReg(), "i");
-		while (i < 99) { //prevent endless loop
-			i++;
-			if (sql.length == 0) {
-				break;
-			}
-			ParseAnyOne(reg);
-			log(stack);
-			log(sql);
-		}
-		if (stack.length != 1) {
-			log(stack);
-			return null;
-		}
-		if (sql.length > 0) {
-			log(sql);
-			return null;
-		}
-		try {
-			log(stack[0].ToString());
-		} catch (e) {
-			return null;
-		}
-		return stack[0];
-	};
-
-	function ParseAnyOne(reg) {
-		sql = trimStart(" ", sql);
-		if (sql.length == 0) {
-			return;
-		}
-		var rList = reg.exec(sql);
-		if (rList.index == 0) {
-			stack.push(rList[0]);
-			sql = sql.substring(rList[0].length);
-			if (stack[stack.length - 1] == pRight) {
-				if (tryGetOneInGroup() == false && tryGetOneLgGroup() == false) {
-					throw "fail parse )";
-				}
-			}
-		} else {
-			throw "not match reg";
-		}
-	};
-
-	function tryGetOneFieldValue() {
-		var i = stack.length - 1;
-		var value = stack[i];
-		if (isValue(value)) {
-			var op = stack[i - 1];
-			if (isOp(op)) {
-				var field = stack[i - 2];
-				if (isField(field)) {
-					stack.pop();
-					stack.pop();
-					stack.pop();
-					var exp = new Expression();
-					exp.setFieldValue(field, value, op);
-					stack.push(exp);
-					return true;
-				}
-			}
-		}
-		return false;
-	};
-	function tryGetOneInGroup() {
-		var i = stack.length - 1;
-		var right = stack[i];
-		if (right == pRight) {
-			var value = stack[i - 1];
-			if (isValue(value)) {
-				var t = stack[i - 2];
-				if (t == comma || t == pLeft) {
-					getOneInGroup();
-					return true;
-				}
-			}
-		}
-		return false;
-	};
-	function tryGetOneLgGroup() {
-		var right = stack.pop();
-		if (right == pRight) {
-			tryGetOneFieldValue();
-			stack.push(right);
-			var i = stack.length - 1;
-			var exp = stack[i - 1];
-			if (exp instanceof Expression) {
-				getOneLgGroup();
-				return true;
-			}
-		}
-		return false;
-	};
-	function getOneLgGroup() {
-		//var list = [];
-		var group = new Expression();
-		group.setGroup();
-		var lg = null;
-		do {
-			item = stack.pop();
-			if (isLg(item)) {
-				if (lg == null) {
-					lg = item;
-					group.GroupLogic = formatLg(lg);
-				} else if (lg != item) {
-					throw "complex group logic";
-				}
-			} else if (isValue(item)) {
-				stack.push(item);
-				if (tryGetOneFieldValue() == false) {
-					throw "tryGetOneFieldValue fail";
-				}
-			} else if (item instanceof Expression) {
-				group.addChild(item);
-			} else if (item == pLeft) {
-				//list.shift();//delete)
-				pushExp(group);
-				return;
-			} else if (item == pRight) {
-				//list.push(item);//save)
-			} else {
-				throw "getOneLgGroup fail";
-			}
-		} while (stack.length > 0)
-	};
-	function getOneInGroup() {
-		var list = [];
-		var item;
-		do {
-			item = stack.pop();
-			if (isValue(item)) {
-				list.push(item);
-			} else if (isField(item)) {
-				var group = new Expression();
-				group.setGroup();
-				var field = item;
-				var exp;
-				var value;
-				do {
-					value = list.pop();
-					exp = new Expression();
-					exp.setFieldValue(field, value, opEqual);
-					group.addChild(exp);
-				} while (list.length > 0)
-				pushExp(group);
-				return;
-			} else if (item == comma || isOpIn(item) || item == pLeft || item == pRight) {
-				continue;
-			} else {
-				throw "getOneInGroup fail";
-				return;
-			}
-		} while (stack.length > 0)
-		throw "getOneInGroup fail";
-	};
-	function pushExp(group) {
-		if (group.Children.length == 1) {
-			var exp = group.Children[0];
-			exp.removeSelf();
-			stack.push(exp);
-		} else if (group.Children.length == 0) {
-			//nothing to do
-		} else {
-			stack.push(group);
-		}
-	};
-
-	function isLg(e) {
-		if (typeof e == "string" && lgList.indexOf(e.toLowerCase()) >= 0) {
-			return true;
-		} else {
-			return false;
-		}
-	};
-	function isField(e) {
-		if (typeof e == "string" && fList.indexOf(e.toLowerCase()) >= 0) {
-			return true;
-		} else {
-			return false;
-		}
-	};
-	function isOp(e) {
-		if (typeof e == "string" && opList.indexOf(e.toLowerCase()) >= 0) {
-			return true;
-		} else {
-			return false;
-		}
-	};
-	function isOpIn(e) {
-		if (typeof e == "string" && e.toLowerCase() == opIn) {
-			return true;
-		} else {
-			return false;
-		}
-	};
-	function isValue(e) {
-		if (typeof e == "string" && e.indexOf("'") == 0) {
-			return true;
-		} else {
-			return false;
-		}
-	};
-	function formatLg(e) {
-		return " " + e + " ";
-	};
-
-	function trimStart(character, string) {
-		var startIndex = 0;
-		while (string[startIndex] === character) {
-			startIndex++;
-		}
-		return string.substr(startIndex);
-	}
-}
-
-module.exports=ParseSqlHelper;
-
-},{"./Expression.js":4}],10:[function(require,module,exports){
-var $ = require("jquery");
-
-(function () {
-	var listServer = "http://amdpfwfe02:9999/";
-	var SPUserProfileUrl = listServer + "_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v="; //'delta\username'
-	var dataService = "http://amdpfweb02:8080/SAPBW3DataService.svc/";
-	var dataUrlHr = dataService + "VSalesPersonAccount4LoadProfile/";
-	var listUrl = listServer + "_api/web/lists/getbytitle('Sales Person Profile')/items";
-	//test git1
-	var spDomainAccount;
-	var spEmployeeID;
-	var spEmployeeCode;
-	var spSalesP;
-	var spStatus;
-	var spTerminateDate;
-	var spName;
-	var spDepartment;
-	var spCompany;
-	var spEmail;
-	var spOffice;
-	var spPermission;
-
-	var readyToSave = 0;
-
-	$(document).ready(function () {
-		//$("[value='Save']").hide();
-		//$("[value='Cancel']").hide();
-		$("[title='spHide']").hide();
-		$("[id='Ribbon.ListForm.Edit.Commit.Publish-Large']").hide();
-
-		spDomainAccount = $("[title='Domain Account Required Field']");
-		spEmployeeID = $("[title='Employee ID']");
-		spEmployeeCode = $("[title='Employee Code']");
-		spSalesP = $("[title='SalesP']");
-		spStatus = $("[title='Status']");
-		spTerminateDate = $("[title='Terminate Date']");
-		spName = $("[title='Name Required Field']");
-		spDepartment = $("[title='Department']");
-		spCompany = $("[title='Company']");
-		spEmail = $("[title='Email']");
-		spOffice = $("[title='Office']");
-		spPermission = $("[title='Permission']");
-		spJSONStr = $("[title='JSONStr']");
-		//alert(spJSONStr.val());
-
-		spDomainAccount.attr("readonly", "readonly");
-		spEmployeeID.attr("readonly", "readonly");
-		spEmployeeCode.attr("readonly", "readonly");
-		spSalesP.attr("readonly", "readonly");
-		spStatus.attr("readonly", "readonly");
-		spTerminateDate.attr("readonly", "readonly");
-		spName.attr("readonly", "readonly");
-		spDepartment.attr("readonly", "readonly");
-		spCompany.attr("readonly", "readonly");
-		spEmail.attr("readonly", "readonly");
-		spOffice.attr("readonly", "readonly");
-		spPermission.attr("readonly", "readonly");
-
-		$("#btSave").click(function () {
-			$("#msg").text("");
-			var SPUserName = getSPUserName();
-			if (SPUserName != undefined && (readyToSave < 2 || SPUserName != spDomainAccount.val())) {
-				$("#msg").text("Data not ready to save");
-				return;
-			}
-			$("[value='Save']").click();
-		});
-		$("#btCancel").click(function () {
-			$("[value='Cancel']").click();
-		});
-
-	});
-
-	function getSPUserName() {
-		var SPUserName = $("[id='divEntityData']").attr("key");
-		if (SPUserName == undefined) {
-			return SPUserName;
-		}
-		SPUserName = SPUserName.substr(SPUserName.indexOf("\\") + 1);
-		//SPUserName="Tim.Jordan";
-		return SPUserName;
-	};
-
-	/*function successHandler(data) {
-		var Name = data.d.DisplayName;
-		var Email = data.d.Email;
-		var Department = data.d.UserProfileProperties.results.find(getDept).Value;
-		var Company = data.d.UserProfileProperties.results.find(getCom).Value;
-		var Office = data.d.UserProfileProperties.results.find(getOffice).Value;
-
-		spName.val(Name);
-		spDepartment.val(Department);
-		spCompany.val(Company);
-		spEmail.val(Email);
-		spOffice.val(Office);
-		readyToSave++;
-	};
-	function errorHandler(data) {};*/
-	/*function getDept(prop) {
-		return prop.Key == "Department";
-	};
-	function getCom(prop) {
-		return prop.Key == "Company";
-	};
-	function getOffice(prop) {
-		return prop.Key == "Office";
-	};*/
-
-})();
-
-},{"jquery":19}],11:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 /**
  * @license AngularJS v1.6.1
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -5518,11 +4595,11 @@ angular.module('ngAnimate', [], function initAngularHelpers() {
 
 })(window, window.angular);
 
-},{}],12:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 require('./angular-animate');
 module.exports = 'ngAnimate';
 
-},{"./angular-animate":11}],13:[function(require,module,exports){
+},{"./angular-animate":4}],6:[function(require,module,exports){
 /**
  * @license AngularJS v1.6.1
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -5926,11 +5003,11 @@ ngAriaModule.directive('ngShow', ['$aria', function($aria) {
 
 })(window, window.angular);
 
-},{}],14:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 require('./angular-aria');
 module.exports = 'ngAria';
 
-},{"./angular-aria":13}],15:[function(require,module,exports){
+},{"./angular-aria":6}],8:[function(require,module,exports){
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -41680,7 +40757,7 @@ angular.module("material.core").constant("$MD_THEME_CSS", "md-autocomplete.md-TH
 
 
 })(window, window.angular);;window.ngMaterial={version:{full: "1.1.3"}};
-},{}],16:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 // Should already be required, here for clarity
 require('angular');
 
@@ -41694,7 +40771,7 @@ require('./angular-material');
 // Export namespace
 module.exports = 'ngMaterial';
 
-},{"./angular-material":15,"angular":18,"angular-animate":12,"angular-aria":14}],17:[function(require,module,exports){
+},{"./angular-material":8,"angular":11,"angular-animate":5,"angular-aria":7}],10:[function(require,module,exports){
 /**
  * @license AngularJS v1.6.1
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -74677,11 +73754,11 @@ $provide.value("$locale", {
 })(window);
 
 !window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>');
-},{}],18:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 require('./angular');
 module.exports = angular;
 
-},{"./angular":17}],19:[function(require,module,exports){
+},{"./angular":10}],12:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.1.1
  * https://jquery.com/

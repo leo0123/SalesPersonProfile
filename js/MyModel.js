@@ -1,16 +1,18 @@
+//var myConfig = require("../MyConfig.js");
 var myPermissionModel = myPermissionModel || {};
 
 var htmlPath = "../html/";
+//var htmlPath = "../../SitePages/";
 
 myPermissionModel.UrlList = {
-	serviceUrl: "http://amdpfweb02:8080/SAPBW3DataService.svc/",
-	digestUrl: "http://amdpfwfe02:9999/_api/contextinfo",
-	permissionHtmlUrl: htmlPath+"permission.html",
-	SalesOrgHtmlUrl: htmlPath+"SalesOrg.html",
-	DivisionHtmlUrl: htmlPath+"Division.html",
-	DomainAccountHtmlUrl: htmlPath+"DomainAccount.html",
-	listServer: "http://amdpfwfe02:9999/",
-	SPUserProfileUrl: "http://amdpfwfe02:9999/_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v=" //'delta\username'
+	serviceUrl: myConfig.serviceUrl,
+	digestUrl: myConfig.digestUrl,
+	permissionHtmlUrl: myConfig.permissionHtmlUrl,
+	SalesOrgHtmlUrl: myConfig.SalesOrgHtmlUrl,
+	DivisionHtmlUrl: myConfig.DivisionHtmlUrl,
+	DomainAccountHtmlUrl: myConfig.DomainAccountHtmlUrl,
+	listServer: myConfig.listServer,
+	SPUserProfileUrl: myConfig.SPUserProfileUrl
 };
 
 myPermissionModel.OptionManager = function () {
