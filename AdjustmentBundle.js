@@ -1,6 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 //parcelify AdjustmentIndex.js -c AdjustmentBundle.css
 //browserify AdjustmentIndex.js > AdjustmentBundle.js
+//watchify AdjustmentIndex.js -o AdjustmentBundle.js
 require("./js/Adjustment.js");
 
 },{"./js/Adjustment.js":2}],2:[function(require,module,exports){
@@ -9,28 +10,29 @@ var $ = require("jquery");
 require("angular-material");
 var myUtility = require("./Utility.js");
 
-var myFormUrl = '../../SitePages/MyAdjustmentForm.html';
-var listServer = "http://amdpfwfe02:9999/";
-var dataService = "http://amdpfweb02:8080/SAPBW3DataService.svc/";
+var myFormUrl = myAdjustmentConfig.myFormUrl;
+var listServer = myAdjustmentConfig.listServer;
+var dataService = myAdjustmentConfig.dataService;
 var currentUserUrl = listServer + "_api/SP.UserProfiles.PeopleManager/GetMyProperties";
 //var profileListUrl = listServer + "_api/web/lists/getbytitle('Sales Person Profile')/items";
 var profileListUrl = dataService + "vSalesPersonProfile";
-var dataUrl = dataService + "getActualBudget";
-
-var spFields = {};
+var queryActualBudgetUrl = dataService + "getActualBudget";
+var queryNextBatchNum = dataService + "getNextAdjustBatchNum";
+var headers = {
+    "accept": "application/json;odata=verbose"
+};
 
 var myApp = angular.module('myApp', ['ngMaterial']);
 myApp.controller("myPreCtrl", function($scope) {
     $scope.myFormReady = function() {
-      
+
     };
     $scope.myFormUrl = myFormUrl;
 });
 myApp.controller("myCtrl", function($scope, $http) {
-    var msg;
-
     $scope.notAdmin = true;
 
+    var spFields = {};
     spFields.BG = $("[title='BG Required Field']");
     spFields.Company = $("[title='Company Required Field']");
     spFields.SalesPerson = $("[title='Sales Person']");
@@ -41,6 +43,9 @@ myApp.controller("myCtrl", function($scope, $http) {
     spFields.NewSalesPerson = $("[title='New Sales Person']");
     spFields.NewEndCustomer = $("[title='New End Customer']");
     spFields.NewMaterial = $("[title='New Material']");
+    spFields.SoldToCode = $("[title='Sold To Code']");
+    spFields.BatchNumber = $("[title='Batch Number']");
+    spFields.SalesType = $("[title='Sales Type']");
     spFields.YearMonth = $("[title='Effective Year Month Required Field']");
     spFields.ApprovalStatus = $("[title='Approval Status']");
     const isNew = $("#myFormType").text() == "new" ? true : false;
@@ -51,78 +56,63 @@ myApp.controller("myCtrl", function($scope, $http) {
     urlParams.Account = myUtility.getParam("Account");
     urlParams.Customer = myUtility.getParam("Customer");
 
-    /*$scope.myFormReady = function() {
-        load();
-
-        $("#btSave").click(function() {
-            $("[value='Save']:first").click();
-        });
-
-        $("#btCancel").click(function() {
-            $("[value='Cancel']").click();
-        });
-
-        $("#btSearch").click(function() {
-            $scope.searchActualBudget();
-        });
-    };*/
-    load();
-
     $("#btSave").click(function() {
         $("[value='Save']:first").click();
     });
-
     $("#btCancel").click(function() {
-        $("[value='Cancel']").click();
+        $("[value='Cancel']:first").click();
     });
 
-    $("#btSearch").click(function() {
-        $scope.searchActualBudget();
-    });
-    //$scope.myFormUrl = myFormUrl;
+    var msg = $("#msg");
+    var dept;
+    var com;
+    getCurrentUserInfo();
 
-    function load() {
-        msg = $("#msg");
+    function getCurrentUserInfo() {
+        $http({
+            method: "GET",
+            url: currentUserUrl,
+            headers: headers
+        }).then(function mySuccess(response) {
+            dept = response.data.d.UserProfileProperties.results.find(getDept).Value;
+            com = response.data.d.UserProfileProperties.results.find(getCom).Value;
+            if (dept == "IT") {
+                $scope.notAdmin = false;
+            }
+            loadFormData();
+        }, function myError(response) {
+            msg.text(response.status);
+        });
+    };
+
+    function loadFormData() {
         if (isNew) {
-            $http({
-                method: "GET",
-                url: currentUserUrl,
-                headers: {
-                    "accept": "application/json;odata=verbose"
+            if ($scope.notAdmin) {
+                if (com == "ALI") {
+                    com = "DPC";
                 }
-            }).then(function mySuccess(response) {
-                var d = response.data.d.UserProfileProperties.results.find(getDept).Value;
-                if (d == "IT") {
-                    $scope.notAdmin = false;
-                    msg.text("Hi admin, please input BG and Company");
-                    setCompany("DPC");
-                }
-                var c = response.data.d.UserProfileProperties.results.find(getCom).Value;
-                if (c == "ALI") {
-                    c = "DPC";
-                }
-                if ($scope.notAdmin) {
-                    setBG(d);
-                    //$scope.BG = d;
-                    //spFields.BG = d;
-                    setCompany(c);
-                    //$scope.Company = c;
-                    //spFields.Company = c;
-                    //loadOption();
-                }
-            }, function myError(response) {
-                msg.text(response.status);
-            });
+                setBG(dept);
+                setCompany(com);
+            } else {
+                msg.text("Hi admin, please input BG and Company");
+                setCompany("DPC");
+            }
             $scope.selectedYear = "2016";
             spFields.Year.val("2016");
             $scope.selectedMonth = "01";
             spFields.YearMonth.val("201601");
+            $http({
+                method: "GET",
+                url: queryNextBatchNum,
+                headers: headers
+            }).then(function mySuccess(response) {
+                setBatchNumber(response.data.d);
+            }, function myError(response) {
+                msg.text(response.status);
+            });
         } else {
             setBG(spFields.BG.val());
             setCompany(spFields.Company.val());
-            //$scope.BG = spFields.BG.val();
-            //$scope.Company = spFields.Company.val();
-            //loadOption();
             $scope.selectedSalesPerson = spFields.SalesPerson.val();
             $scope.selectedEndCustomer = spFields.EndCustomer.val();
             $scope.selectedMaterial = spFields.Material.val();
@@ -131,12 +121,22 @@ myApp.controller("myCtrl", function($scope, $http) {
             $scope.selectedNewSalesPerson = spFields.NewSalesPerson.val();
             $scope.selectedNewEndCustomer = spFields.NewEndCustomer.val();
             $scope.selectedNewMaterial = spFields.NewMaterial.val();
+            $scope.selectedSoldToCode = spFields.SoldToCode.val();
+            $scope.BatchNumber = spFields.BatchNumber.val();
+            $scope.selectedSalesType = spFields.SalesType.val();
             $scope.selectedMonth = spFields.YearMonth.val().substring(4, 6);
             if (spFields.ApprovalStatus.val() == "Approved" || spFields.ApprovalStatus.val() == "Pending") {
                 msg.text("The status is " + spFields.ApprovalStatus.val() + ", can't be edited.");
-                $("#btSave").prop("disabled", true);
+                if ($scope.notAdmin) {
+                    $("#btSave").prop("disabled", true);
+                }
             }
         }
+    };
+
+    function setBatchNumber(value) {
+        spFields.BatchNumber.val(value);
+        $scope.BatchNumber = value;
     };
 
     function setBG(value) {
@@ -151,7 +151,6 @@ myApp.controller("myCtrl", function($scope, $http) {
         loadOption();
     };
 
-    console.log($scope);
     $scope.selectedChanged = function(field) {
         if (field == "SalesPerson") {
             spFields.SalesPerson.val($scope.selectedSalesPerson);
@@ -167,6 +166,10 @@ myApp.controller("myCtrl", function($scope, $http) {
             spFields.NewEndCustomer.val($scope.selectedNewEndCustomer);
         } else if (field == "NewMaterial") {
             spFields.NewMaterial.val($scope.selectedNewMaterial);
+        } else if (field == "SoldToCode") {
+            spFields.SoldToCode.val($scope.selectedSoldToCode);
+        } else if (field == "SalesType") {
+            spFields.SalesType.val($scope.selectedSalesType);
         } else if (field == "Year") {
             spFields.Year.val($scope.selectedYear);
             spFields.YearMonth.val(spFields.Year.val() + $scope.selectedMonth);
@@ -186,10 +189,15 @@ myApp.controller("myCtrl", function($scope, $http) {
             $scope.NewEndCustomers = list;
         } else if (type == "NewMaterial") {
             $scope.NewMaterials = list;
+        } else if (type == "SoldToCode") {
+            $scope.SoldToCodes = list;
         }
     };
 
     $scope.inputChanged = function(value, type) {
+        if (!value) {
+            return;
+        }
         if (type == "BG") {
             setBG(value);
             return;
@@ -198,7 +206,10 @@ myApp.controller("myCtrl", function($scope, $http) {
             setCompany(value);
             return;
         }
-        //return;
+        if (type == "BatchNumber") {
+            setBatchNumber(value);
+            return;
+        }
 
         if (value.length >= 1) {
             var field = type;
@@ -225,13 +236,11 @@ myApp.controller("myCtrl", function($scope, $http) {
             view = view.substring(3, view.length);
         }
         var urlStr = dataService + "v" + view + "4Adjustment?$filter=BG eq '" + spFields.BG.val() + "' and Company eq '" + spFields.Company.val() + "'" + filter;
-        //msg.text(urlStr);
+        //console.log(urlStr);
         $http({
             method: "GET",
             url: urlStr,
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8'
-            }
+            headers: headers
         }).then(function mySucces(response) {
             setList(type, response.data.d);
         }, function myError(response) {
@@ -239,19 +248,17 @@ myApp.controller("myCtrl", function($scope, $http) {
         })
     };
 
+    //if pre load, then use loadOptionByType,
     function loadOptionByType(type) {
         var view = type;
         if (view.startsWith("New")) {
             view = view.substring(3, view.length);
         }
         var urlStr = dataService + "v" + view + "4Adjustment?$filter=BG eq '" + spFields.BG.val() + "' and Company eq '" + spFields.Company.val() + "'";
-        //msg.text(urlStr);
         $http({
             method: "GET",
             url: urlStr,
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8'
-            }
+            headers: headers
         }).then(function mySucces(response) {
             setList(type, response.data.d);
         }, function myError(response) {
@@ -272,19 +279,17 @@ myApp.controller("myCtrl", function($scope, $http) {
             return;
         }
         var url = profileListUrl + "?$top=999&$orderby=DomainAccount&$filter=BG eq '" + spFields.BG.val() + "' and Company eq '" + spFields.Company.val() + "'";
-        //msg.text(url);
         $http({
             method: "GET",
             url: url,
-            headers: {
-                "accept": "application/json;odata=verbose"
-            }
+            headers: headers
         }).then(function mySucces(response) {
             $scope.SalesPersons = response.data.d;
             inputParams();
         }, function myError(response) {
             msg.text(response.status + url);
         });
+        //if pre load, then use loadOptionByType
         //loadOptionByType("EndCustomer");
         //loadOptionByType("Material");
         //loadOptionByType("ProfitCenter");
@@ -319,7 +324,6 @@ myApp.controller("myCtrl", function($scope, $http) {
         } else {
             $scope.selectedSalesPerson = $scope.SalesPersons.find(findDomainAccountByUrlParam).DomainAccount;
             $scope.selectedChanged('SalesPerson');
-            //alert(spFields.SalesPerson.val());
         }
         $scope.inputEndCustomer = urlParams.Customer;
         $scope.inputChanged($scope.inputEndCustomer, 'EndCustomer');
@@ -334,9 +338,15 @@ myApp.controller("myCtrl", function($scope, $http) {
 
     function checkStatus() {
         if (spFields.ApprovalStatus.val() == "Approved" || spFields.ApprovalStatus.val() == "Pending") {
-            $("#btSave").prop("disabled", true);
-            msg.text("The status is " + spFields.ApprovalStatus.val() + ", can't be edited.");
-            alert(msg.text());
+            if ($scope.notAdmin) {
+                $("#btSave").prop("disabled", true);
+                msg.text("The status is " + spFields.ApprovalStatus.val() + ", can't be edited.");
+                alert(msg.text());
+            } else {
+                if (prompt("The status is " + spFields.ApprovalStatus.val() + ", continue save?") != null) {
+                    return true;
+                }
+            }
             return false;
         }
         return true;
@@ -402,10 +412,8 @@ myApp.controller("myCtrl", function($scope, $http) {
         $scope.status = "loading:" + condition;
         $http({
             method: "GET",
-            url: dataUrl + "?" + condition,
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8'
-            }
+            url: queryActualBudgetUrl + "?" + condition,
+            headers: headers
         }).then(function mySucces(response) {
             $scope.ActualBudget = response.data.d;
             var myDate = new Date();
@@ -415,6 +423,8 @@ myApp.controller("myCtrl", function($scope, $http) {
             alert("error");
         });
     };
+
+    $scope.SalesTypes = ['T','D'];
 });
 
 },{"./Utility.js":3,"angular":11,"angular-material":9,"jquery":12}],3:[function(require,module,exports){

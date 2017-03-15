@@ -3,6 +3,11 @@
 		<tr>
 			<td colspan="2"><input type="button" value=" Save " id="btSave" class="ms-ButtonHeightWidth" target="_self" />
 				<input type="button" value=" Cancel " id="btCancel" class="ms-ButtonHeightWidth" target="_self" />
+				<md-input-container ng-show="notAdmin == false">
+					<md-select ng-model="selectedSalesType" ng-init="selectedSalesType='T'" ng-change="selectedChanged('SalesType')">
+						<md-option ng-value="value" ng-repeat="value in SalesTypes">{{value}}</md-option>
+					</md-select>
+				</md-input-container>
 				<div id="msg" style="color:red;"></div>
 			</td>
 		</tr>
@@ -64,6 +69,19 @@
 				</md-input-container>{{selectedProfitCenter}}
 			</td>
 		</tr>
+		<!--<tr>
+			<td>Sold To Code</td>
+			<td>
+				<md-input-container>
+					<md-select ng-model="selectedSoldToCode" ng-change="selectedChanged('SoldToCode')" multiple placeholder="input to search">
+						<md-select-header>
+							<input ng-model="inputSoldToCode" ng-change="inputChanged(inputSoldToCode,'SoldToCode')" ng-keydown="onSearchChange($event)" />
+						</md-select-header>
+						<md-option ng-value="item.SoldToCode" ng-repeat="item in SoldToCodes | filter:inputSoldToCode">{{item.SoldToCode}}</md-option>
+					</md-select>
+				</md-input-container>{{selectedSoldToCode}}
+			</td>
+		</tr>-->
 		<tr>
 			<td colspan="2">Year:
 				<md-input-container>
@@ -75,7 +93,7 @@
 						<md-option ng-value="2013">2013</md-option>
 					</md-select>
 				</md-input-container>
-				<input type="button" value="search" id="btSearch" class="ms-ButtonHeightWidth" target="_self" />
+				<input type="button" value="search" id="btSearch" ng-click="searchActualBudget()" class="ms-ButtonHeightWidth" target="_self" />
 				<!--<input id="test"/></td>-->
 		</tr>
 		<tr>
@@ -140,6 +158,10 @@
 					</md-select>
 				</md-input-container>
 			</td>
+		</tr>
+		<tr>
+			<td width="150px">Batch Number</td>
+			<td><input id="ngBatchNum" ng-model="BatchNumber" ng-change="inputChanged(BatchNumber,'BatchNumber')" ng-keydown="onSearchChange($event)" /></td>
 		</tr>
 		<tr>
 			<td colspan="2">
