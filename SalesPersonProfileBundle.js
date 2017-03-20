@@ -1,11 +1,12 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+//parcelify SalesPersonProfileIndex.js -c SalesPersonProfileBundle.css
 //browserify SalesPersonProfileIndex.js > SalesPersonProfileBundle.js
-require("./js/MyPermissionApp.js");
-require("./js/SalesProfileForm.js");
-//var myConfig=require("./MyConfig.js");
-//console.log(myConfig.permissionHtmlUrl);
+//watchify SalesPersonProfileIndex.js -o SalesPersonProfileBundle.js
+//require("./js/MyPermissionApp.js");
+//require("./js/SalesProfileForm.js");
+require("./js/SalesPersonProfile.js");
 
-},{"./js/MyPermissionApp.js":7,"./js/SalesProfileForm.js":10}],2:[function(require,module,exports){
+},{"./js/SalesPersonProfile.js":9}],2:[function(require,module,exports){
 var Expression = require("./Expression.js");
 
 function CustomizeExpression(field) {
@@ -518,251 +519,6 @@ myPermissionModel.OptionManager = function () {
 module.exports=myPermissionModel;
 
 },{}],7:[function(require,module,exports){
-var myPermissionApp=require("./MyPermissionCtrl.js");
-var myPermissionModel=require("./MyModel.js");
-var angular=require("angular");
-var $=require("jquery");
-require("angular-material");
-
-(function () {
-	var spDomainAccount;
-	var spEmployeeID;
-	var spEmployeeCode;
-	var spSalesP;
-	var spStatus;
-	var spTerminateDate;
-	var spName;
-	var spDepartment;
-	var spCompany;
-	var spEmail;
-	var spOffice;
-	var spPermission;
-
-	$(function(){
-		spDomainAccount = $("[title='Domain Account Required Field']");
-		spEmployeeID = $("[title='Employee ID']");
-		spEmployeeCode = $("[title='Employee Code']");
-		spSalesP = $("[title='SalesP']");
-		spStatus = $("[title='Status']");
-		spTerminateDate = $("[title='Terminate Date']");
-		spName = $("[title='Name Required Field']");
-		spDepartment = $("[title='Department']");
-		spCompany = $("[title='Company']");
-		spEmail = $("[title='Email']");
-		spOffice = $("[title='Office']");
-		spPermission = $("[title='Permission']");
-		spJSONStr = $("[title='JSONStr']");
-	});
-	
-
-	var myApp = angular.module('myApp', ['ngMaterial']);
-	var spDomainAccountTitle = "[title='Domain Account Required Field']";
-
-	function init() {
-		myApp.controller('myCtrl', myCtrl);
-		myApp.controller('myPermissionCtrl', myPermissionApp.myPermissionCtrl);
-		myApp.controller('mySalesOrgCtrl', mySalesOrgCtrl);
-		myApp.controller('myDivisionCtrl', myDivisionCtrl);
-		if (isNew()) {
-			myApp.controller('myDomainAccountCtrl', myDomainAccountCtrl);
-		}
-	};
-
-	function log(str) {
-		console.log(str);
-	};
-
-	function isNew() {
-		if ($(spDomainAccountTitle).val()) {
-			return false
-		} else {
-			return true;
-		}
-	};
-
-	function myCtrl($scope) {
-		//var log = log;
-		$scope.permissionHtmlUrl = myPermissionModel.UrlList.permissionHtmlUrl;
-		$scope.SalesOrgHtmlUrl = myPermissionModel.UrlList.SalesOrgHtmlUrl;
-		$scope.DivisionHtmlUrl = myPermissionModel.UrlList.DivisionHtmlUrl;
-		if (isNew()) {
-			$scope.DomainAccountHtmlUrl = myPermissionModel.UrlList.DomainAccountHtmlUrl;
-		} else {
-			$("#SPDomainAccountContainer").show();
-		}
-		$scope.$on('selectedSalesOrgChanged', function (e, d) {
-			$scope.$broadcast('reloadDivisionOption', d);
-		});
-		$scope.$on('CompanyChanged', function (e, d) {
-			$scope.$broadcast('reloadSalesOrgOption', d);
-		});
-	};
-
-	function myDomainAccountCtrl($scope, $http) {
-		var spDomainAccount = $(spDomainAccountTitle);
-		loadOption();
-
-		$scope.selectedChanged = function () {
-			var d = $scope.selectedValue;
-			spDomainAccount.val(d.ntaccount);
-			console.log(spEmployeeID);
-			var Race = d.Race;
-			var Emp_Code = d.Emp_Code;
-			var SalesP = d.SalesP;
-			var Status = d.Status;
-			var Terminate_Date = d.Terminate_Date;
-			if (Terminate_Date != null) {
-				Terminate_Date = new Date(parseInt(Terminate_Date.substr(6)));
-			}
-
-			spEmployeeID.val(Race);
-			spEmployeeCode.val(Emp_Code);
-			spSalesP.val(SalesP);
-			spStatus.val(Status);
-			spTerminateDate.val(Terminate_Date);
-
-			loadSPUserProfile();
-		};
-
-		function loadOption() {
-			var urlStr = myPermissionModel.UrlList.serviceUrl + "VSalesPersonAccount4LoadProfile/?$filter=ntaccount ne ''";
-			$http({
-				method: "GET",
-				url: urlStr,
-				headers: {
-					'Content-Type': 'application/json; charset=utf-8'
-				}
-			}).then(function mySucces(response) {
-				$scope.Options = response.data.d;
-			}, function myError(response) {});
-		};
-
-		function loadSPUserProfile() {
-			var urlStr = myPermissionModel.UrlList.SPUserProfileUrl + "'delta\\" + spDomainAccount.val() + "'";
-			$http({
-				method: "GET",
-				url: urlStr,
-				headers: {
-					//'Content-Type': 'application/json; charset=utf-8'
-					"accept": "application/json;odata=verbose"
-				}
-			}).then(function mySucces(response) {
-				var d = response.data.d;
-				var Name = d.DisplayName;
-				var Email = d.Email;
-				var Department = d.UserProfileProperties.results.find(getDept).Value;
-				var Company = d.UserProfileProperties.results.find(getCom).Value;
-				var Office = d.UserProfileProperties.results.find(getOffice).Value;
-				spName.val(Name);
-				spDepartment.val(Department);
-				spCompany.val(Company);
-				spEmail.val(Email);
-				spOffice.val(Office);
-				$scope.$emit('CompanyChanged', spCompany.val());
-			}, function myError(response) {});
-
-			function getDept(prop) {
-				return prop.Key == "Department";
-			};
-			function getCom(prop) {
-				return prop.Key == "Company";
-			};
-			function getOffice(prop) {
-				return prop.Key == "Office";
-			};
-		};
-
-	};
-
-	function mySalesOrgCtrl($scope, $http) {
-		var company = $("[title='Company']").val();
-		if (company) {
-			loadOption();
-		}
-		var spSalesOrg = $("[title='Sales Org']");
-		$scope.selectedSalesOrg = spSalesOrg.val().split(",");
-
-		$scope.selectedChanged = function () {
-			spSalesOrg.val($scope.selectedSalesOrg);
-			$scope.$emit('selectedSalesOrgChanged', $scope.selectedSalesOrg);
-		};
-
-		$scope.$on('reloadSalesOrgOption', function (e, d) {
-			loadOption();
-		});
-
-		function loadOption() {
-			company = $("[title='Company']").val();
-			var urlStr = myPermissionModel.UrlList.serviceUrl + "vCompanyOrg4SalesProfile/?$filter=Company eq '" + company + "'";
-			$http({
-				method: "GET",
-				url: urlStr,
-				headers: {
-					'Content-Type': 'application/json; charset=utf-8'
-				}
-			}).then(function mySucces(response) {
-				$scope.SalesOrgOptions = response.data.d;
-			}, function myError(response) {});
-		};
-	};
-
-	function myDivisionCtrl($scope, $http) {
-		var log = log;
-		loadOption();
-		var spDivision = $("[title='Division']");
-		$scope.selectedDivision = spDivision.val().split(",");
-
-		$scope.selectedChanged = function () {
-			spDivision.val($scope.selectedDivision);
-		};
-
-		$scope.$on('reloadDivisionOption', function (e, d) {
-			loadOption();
-		});
-
-		function loadOption() {
-			var SalesOrg = $("[title='Sales Org']").val();
-			if (!SalesOrg) {
-				$scope.DivisionOptions = null;
-				return;
-			}
-			var orgList = SalesOrg.split(",");
-			var filter;
-			for (var org in orgList) {
-				if (filter) {
-					filter += " or SalesOrg eq '" + orgList[org] + "'";
-				} else {
-					filter = "SalesOrg eq '" + orgList[org] + "'";
-				}
-			}
-			var urlStr = myPermissionModel.UrlList.serviceUrl + "vSalesOrgDivision4SalesProfile/?$filter=" + filter
-				 + "&&$orderby=Division";
-			$http({
-				method: "GET",
-				url: urlStr,
-				headers: {
-					'Content-Type': 'application/json; charset=utf-8'
-				}
-			}).then(function mySucces(response) {
-				$scope.DivisionOptions = distinctList(response.data.d);
-			}, function myError(response) {});
-		};
-
-		function distinctList(oList) {
-			var tList = [];
-			for (var i in oList) {
-				if (!tList.includes(oList[i].Division)) {
-					tList.push(oList[i].Division);
-				}
-			}
-			return tList;
-		};
-	};
-
-	init();
-})();
-
-},{"./MyModel.js":6,"./MyPermissionCtrl.js":8,"angular":18,"angular-material":16,"jquery":19}],8:[function(require,module,exports){
 var myPermissionModel = require("./ParseSql.js");
 var CustomizeExpressionManager = require("./CustomizeExpressionManager.js");
 var Expression = require("./Expression.js");
@@ -770,9 +526,11 @@ var myPermissionModel = require("./MyModel.js");
 var $ = require("jquery");
 var ParseSqlHelper = require("./ParseSql.js");
 
-var myPermissionApp = myPermissionApp || {};
+//var myPermissionApp = myPermissionApp || {};
+var myPermissionHelper = mySalesPersonProfileConfig.myPermissionHelper;
 
-myPermissionApp.myPermissionCtrl = function($scope, $http, $location) {
+//myPermissionApp.
+myPermissionCtrl = function($scope, $http, $location) {
     //var log = myPermissionApp.log;
     var expM = new CustomizeExpressionManager();
     var currentExp;
@@ -786,6 +544,41 @@ myPermissionApp.myPermissionCtrl = function($scope, $http, $location) {
     $scope.expRoot = expM.getRoot();
     $scope.OptionManager = new myPermissionModel.OptionManager();
 
+    myPermissionHelper.load = function(BG, Permission, JSONStr){
+        load(BG, Permission, JSONStr);
+    };
+    function load(BG, Permission, JSONStr) {
+        //theBG = spDepartment.val();
+        if (!BG) {
+            $("#msg").text("Department can't be empty");
+            alert("Department can't be empty");
+            return;
+        }
+        //$("#permissionEditor").show();
+
+        if (JSONStr) {
+            setRoot(angular.fromJson(JSONStr));
+        } else if (Permission) {
+            try {
+                var helper = new ParseSqlHelper();
+                var exp = helper.ParseSql(Permission);
+                if (exp != null) {
+                    var r = new Expression();
+                    r.IsGroup = true;
+                    r.Children.push(exp);
+                    var o = angular.fromJson(angular.toJson(r));
+                    setRoot(o);
+                } else {
+                    $scope.msg = "can't parse original permission, please contact IT or create new permission";
+                }
+            } catch (e) {
+                $scope.msg = "can't parse original permission, please contact IT or create new permission";
+            }
+        } else {
+            $scope.expRoot = expM.getNewRoot();
+        }
+        //$scope.$apply();
+    };
     function openPermissionEditor() {
         //theBG = spDepartment.val();
         if (!spDepartment.val()) {
@@ -818,19 +611,24 @@ myPermissionApp.myPermissionCtrl = function($scope, $http, $location) {
         }
         $scope.$apply();
     };
-    $("#btOpenPermissionEditor").click(openPermissionEditor);
+    //$("#btOpenPermissionEditor").click(openPermissionEditor);
 
     $scope.resetExpRoot = function() {
         $scope.expRoot = expM.getNewRoot();
     };
 
     $scope.btPermissionOKClick = function() {
-        spJSONStr.val(angular.toJson(expM.getRoot()));
-        spPermission.val(expM.getRoot().ToString());
-        $("#permissionEditor").hide();
+        //spJSONStr.val(angular.toJson(expM.getRoot()));
+        //spPermission.val(expM.getRoot().ToString());
+        myPermissionHelper.save(expM.getRoot().ToString(), angular.toJson(expM.getRoot()));
+        //$("#permissionEditor").hide();
+        //$scope.$parent.$parent.showPermission = false;
+        myPermissionHelper.close();
     };
     $scope.btPermissionCancelClick = function() {
-        $("#permissionEditor").hide();
+        //$("#permissionEditor").hide();
+        //$scope.$parent.$parent.showPermission = false;
+        myPermissionHelper.close();
     };
 
     function setRoot(jsonObject) {
@@ -989,9 +787,9 @@ myPermissionApp.myPermissionCtrl = function($scope, $http, $location) {
     };
 };
 
-module.exports = myPermissionApp;
+module.exports = myPermissionCtrl;//myPermissionApp;
 
-},{"./CustomizeExpressionManager.js":3,"./Expression.js":4,"./MyModel.js":6,"./ParseSql.js":9,"jquery":19}],9:[function(require,module,exports){
+},{"./CustomizeExpressionManager.js":3,"./Expression.js":4,"./MyModel.js":6,"./ParseSql.js":8,"jquery":18}],8:[function(require,module,exports){
 var Expression=require("./Expression.js");
 
 ParseSqlHelper = function () {
@@ -1281,119 +1079,392 @@ ParseSqlHelper = function () {
 
 module.exports=ParseSqlHelper;
 
-},{"./Expression.js":4}],10:[function(require,module,exports){
+},{"./Expression.js":4}],9:[function(require,module,exports){
+var angular = require("angular");
 var $ = require("jquery");
-//var myConfig = require("../MyConfig.js");
+require("angular-material");
+var myPermissionCtrl = require("./MyPermissionCtrl.js");
 
-(function () {
-	var listServer = myConfig.listServer;
-	var SPUserProfileUrl = myConfig.SPUserProfileUrl
-	var dataService = "http://amdpfweb02:8080/SAPBW3DataService.svc/";
-	var dataUrlHr = dataService + "VSalesPersonAccount4LoadProfile/";
-	var listUrl = listServer + "_api/web/lists/getbytitle('Sales Person Profile')/items";
-	//test git1
-	var spDomainAccount;
-	var spEmployeeID;
-	var spEmployeeCode;
-	var spSalesP;
-	var spStatus;
-	var spTerminateDate;
-	var spName;
-	var spDepartment;
-	var spCompany;
-	var spEmail;
-	var spOffice;
-	var spPermission;
+var myFormUrl = mySalesPersonProfileConfig.myFormUrl;
+var SPUserProfileUrl = mySalesPersonProfileConfig.SPUserProfileUrl;
+var dataService = mySalesPersonProfileConfig.dataService;
+var headers = {
+    "accept": "application/json;odata=verbose"
+};
+var myPermissionFormUrl = mySalesPersonProfileConfig.myPermissionFormUrl;
+var myPermissionHelper = mySalesPersonProfileConfig.myPermissionHelper;
 
-	var readyToSave = 0;
+var myApp = angular.module('myApp', ['ngMaterial']);
+myApp.controller("myPreCtrl", function($scope) {
+    $scope.myFormReady = function() {
 
-	$(document).ready(function () {
-		//$("[value='Save']").hide();
-		//$("[value='Cancel']").hide();
-		$("[title='spHide']").hide();
-		$("[id='Ribbon.ListForm.Edit.Commit.Publish-Large']").hide();
+    };
+    $scope.myFormUrl = myFormUrl;
+});
+myApp.controller("myPermissionCtrl", myPermissionCtrl);
+myApp.controller("myCtrl", function($scope, $http) {
+    var spFields = {};
+    initSpFields();
+    $scope.isReadOnly = false;
+    $scope.isNew = $("#myFormType").text() == "new" ? true : false;
+    var msg = $("#msg");
 
-		spDomainAccount = $("[title='Domain Account Required Field']");
-		spEmployeeID = $("[title='Employee ID']");
-		spEmployeeCode = $("[title='Employee Code']");
-		spSalesP = $("[title='SalesP']");
-		spStatus = $("[title='Status']");
-		spTerminateDate = $("[title='Terminate Date']");
-		spName = $("[title='Name Required Field']");
-		spDepartment = $("[title='Department']");
-		spCompany = $("[title='Company']");
-		spEmail = $("[title='Email']");
-		spOffice = $("[title='Office']");
-		spPermission = $("[title='Permission']");
-		spJSONStr = $("[title='JSONStr']");
-		//alert(spJSONStr.val());
+    function initSpFields() {
+        configSpFields(spFields);
+        for (var key in spFields) {
+            spFields[key].control = $("[title='" + spFields[key].title + "']");
+        }
+    };
 
-		spDomainAccount.attr("readonly", "readonly");
-		spEmployeeID.attr("readonly", "readonly");
-		spEmployeeCode.attr("readonly", "readonly");
-		spSalesP.attr("readonly", "readonly");
-		spStatus.attr("readonly", "readonly");
-		spTerminateDate.attr("readonly", "readonly");
-		spName.attr("readonly", "readonly");
-		spDepartment.attr("readonly", "readonly");
-		spCompany.attr("readonly", "readonly");
-		spEmail.attr("readonly", "readonly");
-		spOffice.attr("readonly", "readonly");
-		spPermission.attr("readonly", "readonly");
+    function saveToSpFields(type) {
+        if (type == "checkbox") {
+            var spCheckFields = filterSpFields(type);
+            for (var key in spCheckFields) {
+                spCheckFields[key].control.prop("checked", $scope[key]);
+            }
+        } else if (type == "text" || type == "array") {
+            var spTextFields = filterSpFields(type);
+            for (var key in spTextFields) {
+                spTextFields[key].control.val($scope[key]);
+            }
+        } else if (type == "all") {
+            saveToSpFields("checkbox");
+            saveToSpFields("text");
+            saveToSpFields("array");
+        }
+    };
 
-		$("#btSave").click(function () {
-			$("#msg").text("");
-			var SPUserName = getSPUserName();
-			if (SPUserName != undefined && (readyToSave < 2 || SPUserName != spDomainAccount.val())) {
-				$("#msg").text("Data not ready to save");
-				return;
-			}
-			$("[value='Save']").click();
-		});
-		$("#btCancel").click(function () {
-			$("[value='Cancel']").click();
-		});
+    function loadFromSpFields(type) {
+        if (type == "checkbox") {
+            var list = filterSpFields(type);
+            for (var key in list) {
+                $scope[key] = list[key].control.prop("checked");
+            }
+        } else if (type == "text") {
+            var list = filterSpFields(type);
+            for (var key in list) {
+                $scope[key] = list[key].control.val();
+            }
+        } else if (type == "array") {
+            var list = filterSpFields(type);
+            for (var key in list) {
+                $scope[key] = list[key].control.val().split(",");
+            }
+        } else if (type == "all") {
+            loadFromSpFields("checkbox");
+            loadFromSpFields("text");
+            loadFromSpFields("array");
+        }
+    };
 
-	});
+    function filterSpFields(type) {
+        var tmpSpFields = {};
+        for (var key in spFields) {
+            if (spFields[key].type == type) {
+                tmpSpFields[key] = spFields[key];
+            }
+        }
+        return tmpSpFields;
+    };
 
-	function getSPUserName() {
-		var SPUserName = $("[id='divEntityData']").attr("key");
-		if (SPUserName == undefined) {
-			return SPUserName;
-		}
-		SPUserName = SPUserName.substr(SPUserName.indexOf("\\") + 1);
-		//SPUserName="Tim.Jordan";
-		return SPUserName;
-	};
+    function init() {
+        if ($scope.isNew) {
+            loadFromSpFields("checkbox");
+            var DomainAccountUrl = dataService + "vSalesPersonAccount4Profile/?$filter=ntaccount ne ''";
+            loadData(DomainAccountUrl, "DomainAccounts");
+        } else {
+            loadFromSpFields("all");
+            $scope.loadSalesOrg(true);
+            $scope.loadDivision(true);
+        }
+        //$scope.myPermissionFormUrl = myPermissionFormUrl;
+    };
 
-	/*function successHandler(data) {
-		var Name = data.d.DisplayName;
-		var Email = data.d.Email;
-		var Department = data.d.UserProfileProperties.results.find(getDept).Value;
-		var Company = data.d.UserProfileProperties.results.find(getCom).Value;
-		var Office = data.d.UserProfileProperties.results.find(getOffice).Value;
+    function loadData(url, optionName, mySuccess) {
+        $http({
+            method: "GET",
+            url: url,
+            headers: headers
+        }).then(function success(response) {
+            if (mySuccess) {
+                mySuccess(response);
+            } else {
+                $scope[optionName] = response.data.d;
+            }
+        }, myError);
+    };
 
-		spName.val(Name);
-		spDepartment.val(Department);
-		spCompany.val(Company);
-		spEmail.val(Email);
-		spOffice.val(Office);
-		readyToSave++;
-	};
-	function errorHandler(data) {};*/
-	/*function getDept(prop) {
-		return prop.Key == "Department";
-	};
-	function getCom(prop) {
-		return prop.Key == "Company";
-	};
-	function getOffice(prop) {
-		return prop.Key == "Office";
-	};*/
+    function myError(response) {
+        msg.text(response.status);
+    };
 
-})();
+    $scope.selectedDomainAccountChanged = function(type) {
+        msg.text("");
+        var d = $scope.selectedDomainAccount;
+        var tmp = {};
+        tmp.EmployeeID = d.Race;
+        tmp.EmployeeCode = d.Emp_Code;
+        tmp.SalesP = d.SalesP;
+        tmp.Status = d.Status;
+        tmp.TerminateDate = d.Terminate_Date;
+        if (tmp.TerminateDate) {
+            tmp.TerminateDate = new Date(parseInt(tmp.TerminateDate.substr(6)));
+        }
+        for (var key in tmp) {
+            $scope[key] = tmp[key];
+        }
+        var aSPUserProfileUrl = SPUserProfileUrl + "'delta\\" + d.ntaccount + "'";
+        loadData(aSPUserProfileUrl, null, loadSPUserProfileSuccess);
+    };
 
-},{"jquery":19}],11:[function(require,module,exports){
+    function loadSPUserProfileSuccess(response) {
+        var d = response.data.d;
+        if (!d.DisplayName) {
+            msg.text("can't get user information from sharepoint");
+            return;
+        }
+        var tmp = {};
+        tmp.Name = d.DisplayName;
+        tmp.Email = d.Email;
+        tmp.BG = d.UserProfileProperties.results.find(getDept).Value;
+        tmp.Company = d.UserProfileProperties.results.find(getCom).Value;
+        tmp.Office = d.UserProfileProperties.results.find(getOffice).Value;
+        for (var key in tmp) {
+            $scope[key] = tmp[key];
+            //spFields[key].val(tmp[key]);
+        }
+        if ($scope.DomainAccount != $scope.selectedDomainAccount.ntaccount) {
+            $scope.SalesOrg = null;
+            clearDivision();
+        }
+        $scope.DomainAccount = $scope.selectedDomainAccount.ntaccount;
+        $scope.loadSalesOrg(false);
+    };
+
+    var lastCompany;
+    var lastCompanyToken;
+    $scope.loadSalesOrg = function(callByLoad) {
+        if (!$scope.Company) {
+            clearSalesOrg();
+            return;
+        }
+        if (!callByLoad) {
+            if ($scope.Company == lastCompany && $scope.SalesOrgs) {
+                return;
+            }
+            if (lastCompany && $scope.Company != lastCompany) {
+                clearSalesOrg();
+            }
+        }
+        lastCompanyToken = new Date().getTime();
+        var SalesOrgUrl = dataService + "vCompanyOrg4Profile/?$filter=Company eq '" + $scope.Company + "'&t=" + lastCompanyToken;
+        loadData(SalesOrgUrl, null, loadSalesOrgSuccess);
+    };
+
+    function loadSalesOrgSuccess(response) {
+        if (!response.config.url.endsWith("&t=" + lastCompanyToken)) {
+            return;
+        }
+        $scope.SalesOrgs = response.data.d;
+        lastCompany = $scope.Company;
+    };
+
+    $scope.SalesOrgChanged = function() {
+        if (lastSalesOrg && $scope.SalesOrg.toString() != lastSalesOrg) {
+            clearDivision(); //TODO better check belong SalesOrg
+            lastSalesOrg = $scope.SalesOrg.toString();
+        }
+    };
+
+    function clearSalesOrg() {
+        $scope.SalesOrg = null;
+        $scope.SalesOrgs = null;
+        clearDivision();
+    };
+
+    function clearDivision() {
+        $scope.Division = null;
+        $scope.Divisions = null;
+    };
+
+    var lastSalesOrg;
+    var lastSalesOrgToken;
+    $scope.loadDivision = function(callByLoad) {
+        if (!$scope.SalesOrg) {
+            clearDivision();
+            return;
+        }
+        if (!callByLoad) {
+            if ($scope.SalesOrg.toString() == lastSalesOrg && $scope.Divisions) {
+                return;
+            }
+            if (lastSalesOrg && $scope.SalesOrg.toString() != lastSalesOrg) {
+                clearDivision();
+            }
+        }
+
+        var orgList = $scope.SalesOrg;
+        var filter;
+        for (var org in orgList) {
+            if (filter) {
+                filter += " or SalesOrg eq '" + orgList[org] + "'";
+            } else {
+                filter = "SalesOrg eq '" + orgList[org] + "'";
+            }
+        }
+        lastSalesOrgToken = new Date().getTime();
+        var DivisionUrl = dataService + "vSalesOrgDivision4Profile/?$filter=" + filter + "&&$orderby=Division&t=" + lastSalesOrgToken;
+        loadData(DivisionUrl, null, loadDivisionSuccess);
+    }
+
+    function loadDivisionSuccess(response) {
+        if (!response.config.url.endsWith("&t=" + lastSalesOrgToken)) {
+            return;
+        }
+        $scope.Divisions = distinctDivisions(response.data.d);
+        lastSalesOrg = $scope.SalesOrg.toString();
+    };
+
+    function distinctDivisions(oList) {
+        var tList = [];
+        var vList = [];
+        for (var i in oList) {
+            if (!tList.includes(oList[i].Division)) {
+                tList.push(oList[i].Division);
+            }
+        }
+        return tList;
+    };
+
+    init();
+    $("#btSave").click(function() {
+        $("[value='Save']:first").click();
+    });
+    $("#btCancel").click(function() {
+        $("[value='Cancel']:first").click();
+    });
+    PreSaveAction = function() {
+        //TODO check exist
+        saveToSpFields("all");
+        //return false;
+        if ($scope.isNew && $scope.DomainAccount != $scope.selectedDomainAccount.ntaccount) {
+            msg.text("change Domain Account incompleted");
+            return false;
+        }
+        return true;
+    };
+    $scope.openPermissionEditor = function() {
+        if (!$scope.myPermissionFormUrl) {
+            $scope.myPermissionFormUrl = myPermissionFormUrl;
+            $scope.myPermissionFormReady = function() {
+                myPermissionHelper.save = function(Permission, JSONStr) {
+                    $scope.Permission = Permission;
+                    $scope.JSONStr = JSONStr;
+                };
+                myPermissionHelper.close = function(){
+                    $scope.showPermission = false;
+                };
+                $scope.openPermissionEditor();
+            };
+        } else {
+            $scope.showPermission = !$scope.showPermission;
+            myPermissionHelper.load($scope.BG, $scope.Permission, $scope.JSONStr);
+        }
+    };
+
+    function getDept(prop) {
+        return prop.Key == "Department";
+    };
+
+    function getCom(prop) {
+        return prop.Key == "Company";
+    };
+
+    function getOffice(prop) {
+        return prop.Key == "Office";
+    };
+});
+
+function configSpFields(spFields) {
+    spFields.PortalSalesRole = {
+        title: "Portal Sales Role",
+        type: "checkbox"
+    };
+    spFields.ApplyEmployeeID = {
+        title: "Apply Employee ID",
+        type: "checkbox"
+    };
+    spFields.ApplySAPAccount = {
+        title: "Apply SAP Account",
+        type: "checkbox"
+    };
+    spFields.Company = {
+        title: "Company",
+        type: "text"
+    };
+    spFields.SalesOrg = {
+        title: "Sales Org",
+        type: "array"
+    };
+    spFields.Division = {
+        title: "Division",
+        type: "array"
+    };
+    spFields.DomainAccount = {
+        title: "Domain Account Required Field",
+        type: "text"
+    };
+    spFields.Name = {
+        title: "Name Required Field",
+        type: "text"
+    };
+    spFields.Department = {
+        title: "Department",
+        type: "text"
+    };
+    spFields.Email = {
+        title: "Email",
+        type: "text"
+    };
+    spFields.EmployeeID = {
+        title: "Employee ID",
+        type: "text"
+    };
+    spFields.EmployeeCode = {
+        title: "Employee Code",
+        type: "text"
+    };
+    spFields.SalesP = {
+        title: "SalesP",
+        type: "text"
+    };
+    spFields.Status = {
+        title: "Status",
+        type: "text"
+    };
+    spFields.TerminateDate = {
+        title: "Terminate Date",
+        type: "text"
+    };
+    spFields.Office = {
+        title: "Office",
+        type: "text"
+    };
+    spFields.Permission = {
+        title: "Permission",
+        type: "text"
+    };
+    spFields.JSONStr = {
+        title: "JSONStr",
+        type: "text"
+    };
+    spFields.BG = {
+        title: "BG",
+        type: "text"
+    };
+};
+
+},{"./MyPermissionCtrl.js":7,"angular":17,"angular-material":15,"jquery":18}],10:[function(require,module,exports){
 /**
  * @license AngularJS v1.6.1
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -5549,11 +5620,11 @@ angular.module('ngAnimate', [], function initAngularHelpers() {
 
 })(window, window.angular);
 
-},{}],12:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 require('./angular-animate');
 module.exports = 'ngAnimate';
 
-},{"./angular-animate":11}],13:[function(require,module,exports){
+},{"./angular-animate":10}],12:[function(require,module,exports){
 /**
  * @license AngularJS v1.6.1
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -5957,11 +6028,11 @@ ngAriaModule.directive('ngShow', ['$aria', function($aria) {
 
 })(window, window.angular);
 
-},{}],14:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 require('./angular-aria');
 module.exports = 'ngAria';
 
-},{"./angular-aria":13}],15:[function(require,module,exports){
+},{"./angular-aria":12}],14:[function(require,module,exports){
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -41711,7 +41782,7 @@ angular.module("material.core").constant("$MD_THEME_CSS", "md-autocomplete.md-TH
 
 
 })(window, window.angular);;window.ngMaterial={version:{full: "1.1.3"}};
-},{}],16:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 // Should already be required, here for clarity
 require('angular');
 
@@ -41725,7 +41796,7 @@ require('./angular-material');
 // Export namespace
 module.exports = 'ngMaterial';
 
-},{"./angular-material":15,"angular":18,"angular-animate":12,"angular-aria":14}],17:[function(require,module,exports){
+},{"./angular-material":14,"angular":17,"angular-animate":11,"angular-aria":13}],16:[function(require,module,exports){
 /**
  * @license AngularJS v1.6.1
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -74708,11 +74779,11 @@ $provide.value("$locale", {
 })(window);
 
 !window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>');
-},{}],18:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 require('./angular');
 module.exports = angular;
 
-},{"./angular":17}],19:[function(require,module,exports){
+},{"./angular":16}],18:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.1.1
  * https://jquery.com/

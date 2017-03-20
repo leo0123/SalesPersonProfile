@@ -5,9 +5,11 @@ var myPermissionModel = require("./MyModel.js");
 var $ = require("jquery");
 var ParseSqlHelper = require("./ParseSql.js");
 
-var myPermissionApp = myPermissionApp || {};
+//var myPermissionApp = myPermissionApp || {};
+var myPermissionHelper = mySalesPersonProfileConfig.myPermissionHelper;
 
-myPermissionApp.myPermissionCtrl = function($scope, $http, $location) {
+//myPermissionApp.
+myPermissionCtrl = function($scope, $http, $location) {
     //var log = myPermissionApp.log;
     var expM = new CustomizeExpressionManager();
     var currentExp;
@@ -21,6 +23,41 @@ myPermissionApp.myPermissionCtrl = function($scope, $http, $location) {
     $scope.expRoot = expM.getRoot();
     $scope.OptionManager = new myPermissionModel.OptionManager();
 
+    myPermissionHelper.load = function(BG, Permission, JSONStr){
+        load(BG, Permission, JSONStr);
+    };
+    function load(BG, Permission, JSONStr) {
+        //theBG = spDepartment.val();
+        if (!BG) {
+            $("#msg").text("Department can't be empty");
+            alert("Department can't be empty");
+            return;
+        }
+        //$("#permissionEditor").show();
+
+        if (JSONStr) {
+            setRoot(angular.fromJson(JSONStr));
+        } else if (Permission) {
+            try {
+                var helper = new ParseSqlHelper();
+                var exp = helper.ParseSql(Permission);
+                if (exp != null) {
+                    var r = new Expression();
+                    r.IsGroup = true;
+                    r.Children.push(exp);
+                    var o = angular.fromJson(angular.toJson(r));
+                    setRoot(o);
+                } else {
+                    $scope.msg = "can't parse original permission, please contact IT or create new permission";
+                }
+            } catch (e) {
+                $scope.msg = "can't parse original permission, please contact IT or create new permission";
+            }
+        } else {
+            $scope.expRoot = expM.getNewRoot();
+        }
+        //$scope.$apply();
+    };
     function openPermissionEditor() {
         //theBG = spDepartment.val();
         if (!spDepartment.val()) {
@@ -53,19 +90,24 @@ myPermissionApp.myPermissionCtrl = function($scope, $http, $location) {
         }
         $scope.$apply();
     };
-    $("#btOpenPermissionEditor").click(openPermissionEditor);
+    //$("#btOpenPermissionEditor").click(openPermissionEditor);
 
     $scope.resetExpRoot = function() {
         $scope.expRoot = expM.getNewRoot();
     };
 
     $scope.btPermissionOKClick = function() {
-        spJSONStr.val(angular.toJson(expM.getRoot()));
-        spPermission.val(expM.getRoot().ToString());
-        $("#permissionEditor").hide();
+        //spJSONStr.val(angular.toJson(expM.getRoot()));
+        //spPermission.val(expM.getRoot().ToString());
+        myPermissionHelper.save(expM.getRoot().ToString(), angular.toJson(expM.getRoot()));
+        //$("#permissionEditor").hide();
+        //$scope.$parent.$parent.showPermission = false;
+        myPermissionHelper.close();
     };
     $scope.btPermissionCancelClick = function() {
-        $("#permissionEditor").hide();
+        //$("#permissionEditor").hide();
+        //$scope.$parent.$parent.showPermission = false;
+        myPermissionHelper.close();
     };
 
     function setRoot(jsonObject) {
@@ -224,4 +266,4 @@ myPermissionApp.myPermissionCtrl = function($scope, $http, $location) {
     };
 };
 
-module.exports = myPermissionApp;
+module.exports = myPermissionCtrl;//myPermissionApp;

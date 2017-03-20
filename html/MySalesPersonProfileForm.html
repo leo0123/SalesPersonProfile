@@ -1,0 +1,101 @@
+<div ng-controller="myCtrl">
+	<table cellspacing="0">
+		<tr>
+			<td colspan="2"><input type="button" value=" Save " id="btSave" class="ms-ButtonHeightWidth" target="_self" />
+				<input type="button" value=" Cancel " id="btCancel" class="ms-ButtonHeightWidth" target="_self" />
+				<div id="msg" style="color:red;"></div>
+			</td>
+		</tr>
+		<tr>
+			<td width="150px">Domain Account</td>
+			<td>
+				<md-input-container ng-show="isNew">
+					<md-select ng-model="selectedDomainAccount" ng-change="selectedDomainAccountChanged()" placeholder="Select DomainAccount">
+						<md-option ng-value="item" ng-repeat="item in DomainAccounts">{{item.ntaccount}}</md-option>
+					</md-select>
+				</md-input-container>
+				<input ng-show="!isNew" ng-model="DomainAccount" ng-readonly="isReadOnly"/>
+			</td>
+		</tr>
+		<tr>
+			<td width="150px">Name</td>
+			<td><input ng-model="Name" ng-readonly="isReadOnly"/></td>
+		</tr>
+		<tr>
+			<td>BG</td>
+			<td><input ng-model="BG" ng-readonly="isReadOnly"/></td>
+		</tr>
+		<tr>
+			<td>Company</td>
+			<td><input ng-model="Company" ng-readonly="isReadOnly"/></td>
+		</tr>
+		<tr>
+			<td>Email</td>
+			<td><input ng-model="Email" ng-readonly="isReadOnly"/></td>
+		</tr>
+		<tr>
+			<td>Employee ID</td>
+			<td><input ng-model="EmployeeID" ng-readonly="isReadOnly"/></td>
+		</tr>
+		<tr>
+			<td>Employee Code</td>
+			<td><input ng-model="EmployeeCode" ng-readonly="isReadOnly"/></td>
+		</tr>
+		<tr>
+			<td>SalesP</td>
+			<td><input ng-model="SalesP" ng-readonly="isReadOnly"/></td>
+		</tr>
+		<tr>
+			<td>Status</td>
+			<td><input ng-model="Status" ng-readonly="isReadOnly"/></td>
+		</tr>
+		<tr>
+			<td>Office</td>
+			<td><input ng-model="Office" ng-readonly="isReadOnly"/></td>
+		</tr>
+		<tr>
+			<td>Portal Sales Role</td>
+			<td>
+				<md-checkbox ng-model="PortalSalesRole"></md-checkbox>
+			</td>
+		</tr>
+		<tr>
+			<td>Apply Employee ID</td>
+			<td><md-checkbox ng-model="ApplyEmployeeID"></md-checkbox></td>
+		</tr>
+		<tr>
+			<td>Apply SAP Account</td>
+			<td><md-checkbox ng-model="ApplySAPAccount"></md-checkbox></td>
+		</tr>
+		<tr>
+			<td>Sales Org</td>
+			<td>
+				<md-input-container>
+					<md-select ng-model="SalesOrg" md-on-open="loadSalesOrg(false)" ng-change="SalesOrgChanged()" multiple placeholder="Select Sales Org">
+						<md-option ng-value="item.ORG" ng-repeat="item in SalesOrgs">{{item.ORG}}</md-option>
+					</md-select>
+				</md-input-container>
+			</td>
+		</tr>
+		<tr>
+			<td>Division</td>
+			<td>
+				<md-input-container>
+					<md-select ng-model="Division" md-on-open="loadDivision(false)" multiple placeholder="Select Division">
+						<md-option ng-value="item" ng-repeat="item in Divisions">{{item}}</md-option>
+					</md-select>
+				</md-input-container>
+			</td>
+		</tr>
+		<tr>
+			<td>
+					Request Permission
+					<input type="button" value="Edit Permission" ng-click="openPermissionEditor()" class="ms-ButtonHeightWidth" target="_self"/>
+			</td>
+			<td>
+					<md-content>{{Permission}}</md-content>
+					<div ng-show="showPermission" ng-init="showPermission=false" style="position:relative;" ng-include="myPermissionFormUrl"  onload="myPermissionFormReady()"></div>
+			</td>
+		</tr>
+	</table>
+</div>
