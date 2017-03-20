@@ -18,4 +18,5 @@ mySalesPersonProfileConfig.SPListServer = "http://amdpfwfe02:9999/";
 mySalesPersonProfileConfig.SPUserProfileUrl = mySalesPersonProfileConfig.SPListServer + "_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v=" //'delta\username'
 mySalesPersonProfileConfig.myPermissionFormUrl = '/SitePages/MyPermissionForm.html';
 mySalesPersonProfileConfig.myPermissionHelper = {};
+mySalesPersonProfileConfig.myDisplaySectionUrl = '/SitePages/MySalesPersonProfileDisplay.html';
 //module.exports=myConfig;

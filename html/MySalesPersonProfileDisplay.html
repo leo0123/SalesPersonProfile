@@ -1,0 +1,22 @@
+<div ng-controller="myCtrl" style="position:absolute;left:600px;width:350px;">
+	<input type="button" value="{{btName}}" ng-click="showSalesCustomer()" class="ms-ButtonHeightWidth" target="_self" />
+	<div style="background:lightblue;" ng-show="showResults">
+		<div style="color:blue;">{{status}}</div>
+		<table border="0">
+			<tr>
+				<td>EndCustomer</td>
+				<td>Actual/Budget</td>
+				<td>SalesType</td>
+				<td>Year</td>
+				<td></td>
+			</tr>
+			<tr ng-repeat="x in Customers | orderBy : 'EndCustomer'">
+				<td>{{x.EndCustomer}}</td>
+				<td>{{x.Source}}</td>
+				<td>{{x.SalesType}}</td>
+				<td>{{x.Year}}</td>
+				<td><a target="_blank" href="{{adjustUrl}}?Customer={{x.EndCustomer}}{{params}}">adjust</a></td>
+			</tr>
+		</table>
+	</div>
+</div>

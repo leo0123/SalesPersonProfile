@@ -99,7 +99,7 @@ myApp.controller("myCtrl", function($scope, $http) {
                 url: queryNextBatchNum,
                 headers: headers
             }).then(function mySuccess(response) {
-                setBatchNumber(response.data.d);
+                setBatchNumber(response.data.d.getNextAdjustBatchNum);
             }, function myError(response) {
                 msg.text(response.status);
             });
@@ -403,6 +403,7 @@ myApp.controller("myCtrl", function($scope, $http) {
             condition += "&ProfitCenter='" + spFields.ProfitCenter.val() + "'";
         }
         $scope.status = "loading:" + condition;
+        console.log(queryActualBudgetUrl + "?" + condition);
         $http({
             method: "GET",
             url: queryActualBudgetUrl + "?" + condition,

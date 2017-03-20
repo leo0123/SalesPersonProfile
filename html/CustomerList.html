@@ -1,28 +1,23 @@
-﻿var app = angular.module("myApp", []);
-app.controller("myCtrl", function ($scope,$http) {
-	$("#btAngularClose").click(function(){
-									$("#AngularDiv").hide();
-								});
-	$scope.status="loading";
-	var NTAccount = $("#DomainAccount").text();
-	//var account = NTAccount.substring(13);
-	var BG = $("#Department").text();
-	var Company = $("#Company").text();
-	$scope.params = "&BG="+BG+"&Company="+Company+"&Account="+NTAccount;
-	//alert(account);
-	$http({
-            method: "GET",
-            url: "http://amdpfweb02:8080/SAPBW3DataService.svc/vSalesCustomer?$filter=SalesPerson eq '"+NTAccount+"'",
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8'
-            }
-        }).then(function mySucces(response) {
-            $scope.Customers = response.data.d;
-            var myDate = new Date();
-            $scope.status = "loaded at " + myDate.toLocaleTimeString();
-            //$scope.searchProfitCenterResult = 'click to select ProfitCenter';
+<script src="../../SitePages/scripts/bower_components/angular/angular.js" type="text/javascript"></script>
+<script src="../../SitePages/scripts/CustomerList.js"></script>
 
-        }, function myError(response) {
-            $scope.status = response.status;
-        })
-});
+<div id="AngularDiv" ng-app="myApp" ng-controller="myCtrl" style="position:absolute;left:600px;top:100px;background:lightblue;width:350px;z-index:2;">
+<input type="button" value="close" id="btAngularClose" class="ms-ButtonHeightWidth" target="_self"/>
+<div style="color:blue;">{{status}}</div>
+<table  border="0">
+	<tr>
+		<td>EndCustomer</td>
+		<td>Actual/Budget</td>
+		<td>SalesType</td>
+		<td>Year</td>
+		<td></td>
+	</tr>
+    <tr ng-repeat="x in Customers | orderBy : 'CustomerName'">
+        <td>{{x.EndCustomer}}</td>
+        <td>{{x.Source}}</td>
+        <td>{{x.SalesType}}</td>
+        <td>{{x.Year}}</td>
+        <td><a target="_blank" href="http://amdpfwfe02:9999/Lists/Adjustment%20Record/NewForm1.aspx?Customer={{x.CustomerName}}{{params}}">adjust</a></td>
+    </tr>
+</table>
+</div>
