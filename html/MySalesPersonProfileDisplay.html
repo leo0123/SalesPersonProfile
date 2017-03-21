@@ -10,12 +10,12 @@
 				<td>Year</td>
 				<td></td>
 			</tr>
-			<tr ng-repeat="x in Customers | orderBy : 'EndCustomer'">
+			<tr ng-repeat="x in Customers">
 				<td>{{x.EndCustomer}}</td>
 				<td>{{x.Source}}</td>
 				<td>{{x.SalesType}}</td>
 				<td>{{x.Year}}</td>
-				<td><a target="_blank" href="{{adjustUrl}}?Customer={{x.EndCustomer}}{{params}}">adjust</a></td>
+				<td><a target="_blank" href="{{adjustUrl}}?c={{x.EndCustomer}}{{params}}">adjust</a></td>
 			</tr>
 		</table>
 	</div>

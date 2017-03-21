@@ -1,7 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 //parcelify AdjustmentIndex.js -c AdjustmentBundle.css
 //browserify AdjustmentIndex.js > AdjustmentBundle.js
-//watchify AdjustmentIndex.js -o AdjustmentBundle.js
+//watchify AdjustmentIndex.js -o AdjustmentBundle.js -v
 require("./js/Adjustment.js");
 
 },{"./js/Adjustment.js":2}],2:[function(require,module,exports){
@@ -13,6 +13,7 @@ var myUtility = require("./Utility.js");
 var myFormUrl = myAdjustmentConfig.myFormUrl;
 var listServer = myAdjustmentConfig.listServer;
 var dataService = myAdjustmentConfig.dataService;
+var vSalesCustomerUrl = dataService + "vSalesCustomer";
 var currentUserUrl = listServer + "_api/SP.UserProfiles.PeopleManager/GetMyProperties";
 //var profileListUrl = listServer + "_api/web/lists/getbytitle('Sales Person Profile')/items";
 var profileListUrl = dataService + "vSalesPersonProfile";
@@ -49,12 +50,6 @@ myApp.controller("myCtrl", function($scope, $http) {
     spFields.YearMonth = $("[title='Effective Year Month Required Field']");
     spFields.ApprovalStatus = $("[title='Approval Status']");
     const isNew = $("#myFormType").text() == "new" ? true : false;
-
-    var urlParams = {};
-    urlParams.BG = myUtility.getParam("BG");
-    urlParams.Company = myUtility.getParam("Company");
-    urlParams.Account = myUtility.getParam("Account");
-    urlParams.Customer = myUtility.getParam("Customer");
 
     $("#btSave").click(function() {
         $("[value='Save']:first").click();
@@ -97,6 +92,7 @@ myApp.controller("myCtrl", function($scope, $http) {
                 msg.text("Hi admin, please input BG and Company");
                 setCompany("DPC");
             }
+            loadFromUrl();
             $scope.selectedYear = "2016";
             spFields.Year.val("2016");
             $scope.selectedMonth = "01";
@@ -285,7 +281,10 @@ myApp.controller("myCtrl", function($scope, $http) {
             headers: headers
         }).then(function mySucces(response) {
             $scope.SalesPersons = response.data.d;
-            inputParams();
+            var s = $scope.selectedSalesPerson;
+            $scope.selectedSalesPerson = null;
+            $scope.selectedSalesPerson = s;
+            //inputParams();
         }, function myError(response) {
             msg.text(response.status + url);
         });
@@ -295,45 +294,31 @@ myApp.controller("myCtrl", function($scope, $http) {
         //loadOptionByType("ProfitCenter");
     };
 
-    function inputParams() {
-        if (!(urlParams.BG && urlParams.Company)) {
-            return;
-        }
-        msg.text("");
-        if (urlParams.BG != $scope.BG || urlParams.Company != $scope.Company) {
-            if ($scope.notAdmin) {
-                msg.text("BG or Company not match");
-                return;
-            } else {
-                if (urlParams.BG) {
-                    setBG(urlParams.BG);
-                }
-                if (urlParams.Company) {
-                    setCompany(urlParams.Company);
-                }
-                //$scope.BG = urlParams.BG;
-                //inputChanged($scope.BG,'BG')
-                //$scope.Company = urlParams.Company;
-                //inputChanged($scope.Company,'Company')
-            }
-        }
-        //return;
-        var t = $scope.SalesPersons.find(findDomainAccountByUrlParam);
-        if (t == undefined) {
-            msg.text("Sales Person not find");
-        } else {
-            $scope.selectedSalesPerson = $scope.SalesPersons.find(findDomainAccountByUrlParam).DomainAccount;
-            $scope.selectedChanged('SalesPerson');
-        }
-        $scope.inputEndCustomer = urlParams.Customer;
-        $scope.inputChanged($scope.inputEndCustomer, 'EndCustomer');
-        $scope.selectedEndCustomer = urlParams.Customer;
-        $scope.selectedChanged('EndCustomer');
-        //$scope.searchActualBudget();
+    function loadData(url, mySuccess, myError) {
+        $http({
+            method: "GET",
+            url: url,
+            headers: headers
+        }).then(mySuccess, myError);
     };
 
-    function findDomainAccountByUrlParam(e) {
-        return e.DomainAccount == urlParams.Account;
+    function loadFromUrl() {
+        var sales = myUtility.getParam("s");
+        var customer = myUtility.getParam("c");
+        var url = vSalesCustomerUrl + "?$filter=SalesPerson eq '" + sales + "' and EndCustomer eq '" + customer + "'";
+        if ($scope.notAdmin) {
+            url = url + " and BG eq '" + $scope.BG + "' and Company eq '" + $scope.Company + "'"
+        }
+        loadData(url, function mySuccess(response) {
+            console.log(response.data.d);
+            var d = response.data.d[0];
+            setCompany(d.Company);
+            setBG(d.BG);
+            $scope.selectedSalesPerson = d.SalesPerson;
+            $scope.selectedEndCustomer = [d.EndCustomer];
+        }, function myError() {
+            console.log("url not match");
+        });
     };
 
     function checkStatus() {
@@ -425,7 +410,7 @@ myApp.controller("myCtrl", function($scope, $http) {
         });
     };
 
-    $scope.SalesTypes = ['T','D'];
+    $scope.SalesTypes = ['T', 'D'];
 });
 
 },{"./Utility.js":3,"angular":11,"angular-material":9,"jquery":12}],3:[function(require,module,exports){
@@ -445,6 +430,9 @@ myUtility.getParam = function(paramName) {
     } else {
         param = url.substring(i);
     }
+    while (param.includes("%20")){
+        param = param.replace("%20", " ");
+    };
     return param;
 };
 

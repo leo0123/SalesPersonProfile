@@ -18,16 +18,15 @@ var headers = {
 };
 
 $(function() {
-    //$("[Name='SPBookmark_JSONStr']").parentsUntil("tr").parent().hide();
     getTr("JSONStr").hide();
-    //$("[Name='SPBookmark_Department']").parentsUntil("tr").parent().hide();
     getTr("Department").hide();
 });
 
-function getTr(FieldName){
-    return $("[Name='SPBookmark_"+FieldName+"']").parentsUntil("tr").parent();
+function getTr(FieldName) {
+    return $("[Name='SPBookmark_" + FieldName + "']").parentsUntil("tr").parent();
 };
-function getFeildValue(FieldName){
+
+function getFeildValue(FieldName) {
     return getTr(FieldName).children("#SPFieldText").text();
 };
 
@@ -40,16 +39,16 @@ myApp.controller("myCtrl", function($scope, $http) {
     $scope.showSalesCustomer = function() {
         if ($scope.btName == "load customers") {
             var NTAccount = getFeildValue("Title");
-            var BG = getFeildValue("BG");
-            var Company = getFeildValue("Company");
+            //var BG = getFeildValue("BG");
+            //var Company = getFeildValue("Company");
             $scope.adjustUrl = adjustUrl;
-            $scope.params = "&BG=" + BG + "&Company=" + Company + "&Account=" + NTAccount;
+            $scope.params = "&s=" + NTAccount;// + "&BG=" + BG + "&Company=" + Company;
             $scope.status = "loading";
             $scope.showResults = true;
             $scope.btName = "hide";
             $http({
                 method: "GET",
-                url: dataService + "vSalesCustomer?$filter=SalesPerson eq '" + NTAccount + "'",
+                url: dataService + "vSalesCustomer?$filter=SalesPerson eq '" + NTAccount + "'&$orderby=EndCustomer",
                 headers: headers
             }).then(function mySucces(response) {
                 $scope.Customers = response.data.d;
@@ -60,7 +59,7 @@ myApp.controller("myCtrl", function($scope, $http) {
             })
         } else {
             $scope.showResults = !$scope.showResults;
-            $scope.btName = !$scope.showResults? "show customers":"hide";
+            $scope.btName = !$scope.showResults ? "show customers" : "hide";
         }
     };
 });

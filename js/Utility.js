@@ -14,6 +14,9 @@ myUtility.getParam = function(paramName) {
     } else {
         param = url.substring(i);
     }
+    while (param.includes("%20")){
+        param = param.replace("%20", " ");
+    };
     return param;
 };
 
