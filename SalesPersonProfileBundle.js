@@ -1,7 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 //parcelify SalesPersonProfileIndex.js -c SalesPersonProfileBundle.css
 //browserify SalesPersonProfileIndex.js > SalesPersonProfileBundle.js
-//watchify SalesPersonProfileIndex.js -o SalesPersonProfileBundle.js
+//watchify SalesPersonProfileIndex.js -o SalesPersonProfileBundle.js -v
 //require("./js/MyPermissionApp.js");
 //require("./js/SalesProfileForm.js");
 require("./js/SalesPersonProfile.js");
@@ -337,11 +337,15 @@ module.exports=ExpressionManager;
 //var myConfig = require("../MyConfig.js");
 var myPermissionModel = myPermissionModel || {};
 
-var htmlPath = "../html/";
+//var htmlPath = "../html/";
 //var htmlPath = "../../SitePages/";
+var headers = {
+    "accept": "application/json;odata=verbose"
+};
 
-myPermissionModel.UrlList = {
-	serviceUrl: myConfig.serviceUrl,
+/*myPermissionModel.UrlList = {
+	//serviceUrl: myConfig.serviceUrl,
+	serviceUrl: mySalesPersonProfileConfig.dataService,
 	digestUrl: myConfig.digestUrl,
 	permissionHtmlUrl: myConfig.permissionHtmlUrl,
 	SalesOrgHtmlUrl: myConfig.SalesOrgHtmlUrl,
@@ -349,7 +353,9 @@ myPermissionModel.UrlList = {
 	DomainAccountHtmlUrl: myConfig.DomainAccountHtmlUrl,
 	listServer: myConfig.listServer,
 	SPUserProfileUrl: myConfig.SPUserProfileUrl
-};
+};*/
+
+var serviceUrl = mySalesPersonProfileConfig.dataService;
 
 myPermissionModel.OptionManager = function () {
 	var self = this;
@@ -408,7 +414,7 @@ myPermissionModel.OptionManager = function () {
 		optionLists[type] = list;
 	};
 
-	var serviceUrl = myPermissionModel.UrlList.serviceUrl;
+	//var serviceUrl = myPermissionModel.UrlList.serviceUrl;
 	var queryList = [];
 
 	var theBG;
@@ -443,7 +449,7 @@ myPermissionModel.OptionManager = function () {
 			filter += filter ? " and " : "";
 			filter += "indexof(Value, '" + partValue + "') ge 0"
 		}
-		filter = filter ? "?$filter=" + filter : "";
+		filter = filter ? "&$filter=" + filter : "";
 		return filter;
 	};
 
@@ -454,13 +460,11 @@ myPermissionModel.OptionManager = function () {
 		}
 		var type = queryList[0].type;
 		var filter = getFilter(type, theBG, queryList[0].partValue);
-		var urlStr = serviceUrl + "vDim" + type + "4SalesProfile" + filter;
+		var urlStr = serviceUrl + "vDim" + type + "4SalesProfile?$orderby=Value" + filter;
 		http({
 			method: "GET",
 			url: urlStr,
-			headers: {
-				'Content-Type': 'application/json; charset=utf-8'
-			}
+			headers: headers
 		}).then(function mySucces(response) {
 			var item = queryList.shift();
 			cacheList(item.type, response.data.d);
@@ -528,6 +532,7 @@ var ParseSqlHelper = require("./ParseSql.js");
 
 //var myPermissionApp = myPermissionApp || {};
 var myPermissionHelper = mySalesPersonProfileConfig.myPermissionHelper;
+var serviceUrl = mySalesPersonProfileConfig.dataService;
 
 //myPermissionApp.
 myPermissionCtrl = function($scope, $http, $location) {
@@ -540,7 +545,7 @@ myPermissionCtrl = function($scope, $http, $location) {
     var spJSONStr = $("[title='JSONStr']");
     var spDepartment = $("[title='Department']");
     //var theBG = spDepartment.val();
-    var serviceUrl = myPermissionModel.UrlList.serviceUrl;
+    //var serviceUrl = myPermissionModel.UrlList.serviceUrl;
     $scope.expRoot = expM.getRoot();
     $scope.OptionManager = new myPermissionModel.OptionManager();
 

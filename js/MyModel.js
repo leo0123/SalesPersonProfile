@@ -1,11 +1,15 @@
 //var myConfig = require("../MyConfig.js");
 var myPermissionModel = myPermissionModel || {};
 
-var htmlPath = "../html/";
+//var htmlPath = "../html/";
 //var htmlPath = "../../SitePages/";
+var headers = {
+    "accept": "application/json;odata=verbose"
+};
 
-myPermissionModel.UrlList = {
-	serviceUrl: myConfig.serviceUrl,
+/*myPermissionModel.UrlList = {
+	//serviceUrl: myConfig.serviceUrl,
+	serviceUrl: mySalesPersonProfileConfig.dataService,
 	digestUrl: myConfig.digestUrl,
 	permissionHtmlUrl: myConfig.permissionHtmlUrl,
 	SalesOrgHtmlUrl: myConfig.SalesOrgHtmlUrl,
@@ -13,7 +17,9 @@ myPermissionModel.UrlList = {
 	DomainAccountHtmlUrl: myConfig.DomainAccountHtmlUrl,
 	listServer: myConfig.listServer,
 	SPUserProfileUrl: myConfig.SPUserProfileUrl
-};
+};*/
+
+var serviceUrl = mySalesPersonProfileConfig.dataService;
 
 myPermissionModel.OptionManager = function () {
 	var self = this;
@@ -72,7 +78,7 @@ myPermissionModel.OptionManager = function () {
 		optionLists[type] = list;
 	};
 
-	var serviceUrl = myPermissionModel.UrlList.serviceUrl;
+	//var serviceUrl = myPermissionModel.UrlList.serviceUrl;
 	var queryList = [];
 
 	var theBG;
@@ -107,7 +113,7 @@ myPermissionModel.OptionManager = function () {
 			filter += filter ? " and " : "";
 			filter += "indexof(Value, '" + partValue + "') ge 0"
 		}
-		filter = filter ? "?$filter=" + filter : "";
+		filter = filter ? "&$filter=" + filter : "";
 		return filter;
 	};
 
@@ -118,13 +124,11 @@ myPermissionModel.OptionManager = function () {
 		}
 		var type = queryList[0].type;
 		var filter = getFilter(type, theBG, queryList[0].partValue);
-		var urlStr = serviceUrl + "vDim" + type + "4SalesProfile" + filter;
+		var urlStr = serviceUrl + "vDim" + type + "4SalesProfile?$orderby=Value" + filter;
 		http({
 			method: "GET",
 			url: urlStr,
-			headers: {
-				'Content-Type': 'application/json; charset=utf-8'
-			}
+			headers: headers
 		}).then(function mySucces(response) {
 			var item = queryList.shift();
 			cacheList(item.type, response.data.d);

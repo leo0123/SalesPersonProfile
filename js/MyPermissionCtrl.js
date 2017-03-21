@@ -7,6 +7,7 @@ var ParseSqlHelper = require("./ParseSql.js");
 
 //var myPermissionApp = myPermissionApp || {};
 var myPermissionHelper = mySalesPersonProfileConfig.myPermissionHelper;
+var serviceUrl = mySalesPersonProfileConfig.dataService;
 
 //myPermissionApp.
 myPermissionCtrl = function($scope, $http, $location) {
@@ -19,7 +20,7 @@ myPermissionCtrl = function($scope, $http, $location) {
     var spJSONStr = $("[title='JSONStr']");
     var spDepartment = $("[title='Department']");
     //var theBG = spDepartment.val();
-    var serviceUrl = myPermissionModel.UrlList.serviceUrl;
+    //var serviceUrl = myPermissionModel.UrlList.serviceUrl;
     $scope.expRoot = expM.getRoot();
     $scope.OptionManager = new myPermissionModel.OptionManager();
 
