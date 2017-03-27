@@ -1,46 +1,71 @@
 ﻿
-var dataService = "http://amdpfweb02:8080/SAPBW3DataService.svc/";
-var dataUrl = dataService + "vSalesAccount4LoadProfile";
-var dataUrlHr = dataService + "VSalesPersonAccount4LoadProfile"; ///?$filter=ID ge 1";
-var dataUrlOldAccount = dataService + "VEmployee_Account4LoadProfile";
+var dataService = "http://amdpfweb02:9999/SAPBW3DataService.svc/";
+var dataUrlNewNtAccount = dataService + "vSalesAccount4LoadProfile";
+var dataUrlHr = dataService + "vSalesHrInfo4LoadProfile"; ///?$filter=ID ge 1";
+var dataUrlOldAccount = dataService + "vEmployee_Account4LoadProfile?$orderby=ID";
 var dataUrlUsersLine = dataService + "vUsersLine4LoadProfile";
 var dataUrlSalesOrgDivision = dataService + "vSalesOrgDivision4LoadProfile?$orderby=ID";
-var listServer = "http://amdpfwfe02:9999/";
+var listServer = "http://sp2013portal.delta-corp.com/sites/MyDelta/";
 var digestUrl = listServer + "_api/contextinfo";
 var listUrl = listServer + "_api/web/lists/getbytitle('Sales Person Profile')/items";
-var digest = null;
-var metaDataType = "SP.Data.Sales_x0020_Person_x0020_ProfileListItem";
-
-(function importData() {
-    start(getNTAccount);
-    //start(getDataFromHr);
-    //start(getOldAccout);
-    //start(getUsersLine);
-    //start(getSalesOrgDivision);
-})();
-
-function start(call) {
-    getFormDigestService(call);
+var SPUserProfileUrl = listServer + "_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v=" //'delta\username'
+var metaDataType = {
+    type: "SP.Data.SalesPersonProfileListItem"
 };
+var headers4get = {
+    accept: 'application/json;odata=verbose'
+};
+var digest = null;
+var url4GetData;
+var currentCall = null;
+var list;
+var x;
+var total = 0;
+var m = 0;
+var n = 0;
+var l = 0;
+var c = 1;
 
-function getFormDigestService(call) {
+$(function() {
+    var type;
+    //type = "NTAccount";
+    //type = "HR"
+    //type = "OldAccount";
+    type = "ADInfo"
+    switch (type) {
+        case "NTAccount":
+            url4GetData = dataUrlNewNtAccount;
+            currentCall = create;
+            break;
+        case "HR":
+            url4GetData = dataUrlHr;
+            currentCall = updateFromHr;
+            break;
+        case "OldAccount":
+            url4GetData = dataUrlOldAccount;
+            currentCall = updateOldAccount;
+            break;
+        case "ADInfo":
+            url4GetData = listUrl + "?$top=999";
+            currentCall = getADInfo;
+            break;
+    }
+    getFormDigestService();
+});
+
+function getFormDigestService() {
     $.ajax({
         url: digestUrl,
         type: 'post',
         data: '',
-        headers: {
-            'Accept': 'application/json;odata=verbose'
-        },
+        headers: headers4get,
         success: function(data) {
             digest = data.d.GetContextWebInformation.FormDigestValue;
             $("#msg").text(digest);
-            call();
+            ajaxget(url4GetData);
         }
     });
 };
-
-var list;
-var x;
 
 function getSalesOrgDivision() {
     $.getJSON(dataUrlSalesOrgDivision, function(data) {
@@ -74,9 +99,7 @@ function getSalesOrgDivisionMetadata(item) {
     x--;
 
     var metadata = {
-        __metadata: {
-            type: metaDataType
-        },
+        __metadata: metaDataType,
         Sales_x0020_Org: oList.toString(),
         Division: dList.toString()
     };
@@ -110,13 +133,13 @@ function updateSalesOrgDivision() {
         success: function(data) {
             x++;
             m += xi;
-            isDone();
+            showMsg();
             updateSalesOrgDivision();
         },
         error: function(data) {
             x++;
             n += xi;
-            isDone();
+            showMsg();
             updateSalesOrgDivision();
         }
     });
@@ -138,9 +161,7 @@ function getUsersLine() {
 function getUsersLineMetadata(item) {
 
     var metadata = {
-        __metadata: {
-            type: metaDataType
-        },
+        __metadata: metaDataType,
         Permission: item.Condition,
         Effective_x0020_Permission: item.Condition //,
         //JSONStr: ""//item.Condition
@@ -173,287 +194,224 @@ function updateUsersLine() {
             x++;
             updateUsersLine();
             m++;
-            isDone();
+            showMsg();
         },
         error: function(data) {
             x++;
             updateUsersLine();
             n++;
-            isDone();
+            showMsg();
         }
     });
 };
 
-function getOldAccout() {
-    $.getJSON(dataUrlOldAccount, function(data) {
+function getMetadata4AD(item) {
+    return {
+        __metadata: metaDataType,
+        Name: item.Name,
+        Email: item.Email,
+        BG: item.BG,
+        Company: item.Company,
+        Office: item.Office
+    };
+};
+function updateAdInfo() {
+    if (list.length == 0) {
+        return;
+    }
+    var item = list.shift();
+    var metadata = getMetadata4AD(item);
+    ajaxpost(item.ID, metadata);
+};
+var adList = [];
+function getADInfo() {
+    if (list.length == 0) {
+        list = adList;
         l = 0;
         m = 0;
         n = 0;
-        list = data.d;
+        x = 0;
         total = list.length;
-        $("#msg").text("Total: " + total);
-        list.sort(function(a, b) {
-            return a.ID - b.ID;
-        });
-        x = 1;
-        updateOldAccount();
+        $("#msg").text("Total:" + total);
+        currentCall = updateAdInfo;
+        updateAdInfo();
+        return;
+    }
+    var item = list.shift();
+    var url = SPUserProfileUrl + "'delta\\" + item.DomainAccount + "'";
+    ajaxget(url, function(data) {
+        var d = data.d;
+        if (!d.DisplayName) {
+            myError();
+            return;
+        }
+        item.Name = d.DisplayName;
+        item.Email = d.Email;
+        item.BG = d.UserProfileProperties.results.find(function(prop) {
+            return prop.Key == "Department";
+        }).Value;
+        item.Company = d.UserProfileProperties.results.find(function(prop) {
+            return prop.Key == "Company";
+        }).Value;
+        item.Office = d.UserProfileProperties.results.find(function(prop) {
+            return prop.Key == "Office";
+        }).Value;
+        adList.push(item);
+        mySuccess();
     });
 };
 
-function updateOldAccount() {
-    if (x >= total) {
-        x--;
-        //$("#msg").text("Total:"+total+";Finish:"+x);
-        return;
-    }
-    var start = x - 1;
-    var end = start;
-    var pID = list[start].ID;
-    var t = total;
-    for (var i = x; i < t; i++) {
-        var ID = list[i].ID;
-        if (pID == ID) {
-            if (i == total - 1) {
-                i++;
-            } else {
-                continue;
-            }
-        }
-        t = i;
-        end = i;
-        x = i;
-        l = end - start;
-        var subList = list.slice(start, end);
-        var metadata = getOldAccountMetadata(subList);
-        $.ajax({
-            url: listUrl + "(" + pID + ")",
-            type: 'post',
-            data: JSON.stringify(metadata),
-            headers: {
-                "X-HTTP-Method": "MERGE",
-                "IF-MATCH": "*",
-                "accept": "application/json;odata=verbose",
-                "content-type": "application/json;odata=verbose",
-                "content-length": metadata.length,
-                "X-RequestDigest": digest
-            },
-            dataType: 'json',
-            success: function(data) {
-                m = m + l;
-                l = 0;
-                isDone();
-                x++;
-                updateOldAccount();
-            },
-            error: function(data) {
-                n = n + l;
-                l = 0;
-                isDone();
-                x++;
-                updateOldAccount();
-            }
-        });
-    }
-};
-
-function getOldAccountMetadata(subList) {
-    var item = subList[0];
-    var OldEmail = "";
-    var OldSAPID = "";
-    var OtherAccount = "";
-    var NTAccount = item.DomainAccount.toLowerCase(); //item.Title.substring(13).toLowerCase();
-    var SalesP = item.SalesP.toLowerCase();
-    var Email = null;
-    if (item.Email != null) {
-        Email = item.Email.toLowerCase();
-    }
-    var Name = item.Name.toLowerCase();
+function getMetadata4OldAccount(subList) {
+    var emailList = [];
+    var SAPIDList = [];
+    var otherAccountList = [];
     for (var i = 0; i < subList.length; i++) {
         var oneAccount = subList[i].Account.toLowerCase();
         if (oneAccount.includes("@")) {
-            if (oneAccount != Email) {
-                OldEmail += oneAccount + ";";
-            }
+            emailList.push(oneAccount);
         } else if (!isNaN(parseInt(oneAccount))) {
-            if (oneAccount != item.Employee_x0020_ID) {
-                OldSAPID += oneAccount + ";";
-            }
+            SAPIDList.push(oneAccount);
         } else {
-            if (oneAccount != Name && oneAccount != SalesP && oneAccount != NTAccount) {
-                OtherAccount += oneAccount + ";";
-            }
+            otherAccountList.push(oneAccount);
         }
     }
-    var metadata = {
-        __metadata: {
-            type: metaDataType
-        },
-        Old_x0020_Email: OldEmail,
-        Old_x0020_SAP_x0020_ID: OldSAPID,
-        Other_x0020_Account: OtherAccount
+    return {
+        __metadata: metaDataType,
+        OldEmail: emailList.toString(),
+        OldSAPID: SAPIDList.toString(),
+        OtherAccount: otherAccountList.toString()
     };
-    return metadata;
+};
+function updateOldAccount() {
+    var subList = [];
+    var lastItem;
+    var item;
+    do {
+        lastItem = list.shift();
+        subList.push(lastItem);
+        if (list.length == 0) {
+            break;
+        }
+        item = list[0];
+    } while (lastItem.ID == item.ID);
+    var metadata = getMetadata4OldAccount(subList);
+    c = subList.length;
+    ajaxpost(lastItem.ID, metadata);
 };
 
-function getDataFromHr() {
-    $.getJSON(dataUrlHr, function(data) {
-        l = 0;
-        m = 0;
-        n = 0;
-        list = data.d;
-        total = list.length;
-        $("#msg").text("Total: " + total);
-        x = 0;
-        updateFromHr();
-    });
-};
-
-function getMetadataFromHr(item) {
+function getMetadata4Hr(item) {
     var Terminate_Date = item.Terminate_Date;
-    if (Terminate_Date != null) {
+    if (Terminate_Date) {
         Terminate_Date = new Date(parseInt(Terminate_Date.substr(6)));
     }
-    var metadata = {
-        __metadata: {
-            type: metaDataType
-        },
+    return {
+        __metadata: metaDataType,
         Name: item.Name,
-        Employee_x0020_ID: item.Race,
-        Employee_x0020_Code: item.Emp_Code,
+        EmployeeID: item.Race,
+        EmployeeCode: item.Emp_Code,
         SalesP: item.SalesP,
-        Terminate_x0020_Date: Terminate_Date,
+        TerminateDate: Terminate_Date,
         Status: item.Status
     };
-    return metadata;
 };
-
 function updateFromHr() {
-    if (x >= list.length) {
-        $("#msg").text("Total:" + total + ";Finish:" + x);
+    if (list.length == 0) {
         return;
     }
-    var item = list[x];
-    var id = item.ID;
-    var metadata = getMetadataFromHr(item);
-    $.ajax({
-        url: listUrl + "(" + id + ")",
-        type: 'post',
-        data: JSON.stringify(metadata),
-        headers: {
+    var item = list.shift();
+    var metadata = getMetadata4Hr(item);
+    ajaxpost(item.ID, metadata);
+};
+
+function create() {
+    if (list.length == 0) {
+        return;
+    }
+    var item = list.shift();
+    var metadata = {
+        __metadata: metaDataType,
+        DomainAccount: item.SalesPerson,
+        BG: item.BG,
+        Company: item.Company
+    };
+    ajaxpost(null, metadata);
+};
+
+function firstCall(data) {
+    l = 0;
+    m = 0;
+    n = 0;
+    x = 0;
+    list = data.d;
+    if (list.results) {
+        list = list.results;
+    }
+    total = list.length;
+    $("#msg").text("Total:" + total);
+    currentCall();
+};
+
+function mySuccess(data) {
+    m = m + c;
+    showMsg();
+    x++;
+    currentCall();
+};
+
+function myError(data) {
+    n = n + c;
+    showMsg();
+    x++;
+    currentCall();
+};
+
+function getHeaders4Post(metadata, isMerge) {
+    if (isMerge) {
+        return {
             "X-HTTP-Method": "MERGE",
             "IF-MATCH": "*",
             "accept": "application/json;odata=verbose",
             "content-type": "application/json;odata=verbose",
             "content-length": metadata.length,
             "X-RequestDigest": digest
-        },
-        dataType: 'json',
-        success: function(data) {
-            x++;
-            updateFromHr();
-            m++;
-            isDone();
-        },
-        error: function(data) {
-            x++;
-            updateFromHr();
-            n++;
-            isDone();
-        }
-    });
-};
-
-function getNTAccount() {
-    $.getJSON(dataUrl, function(data, status) {
-        l = 0;
-        m = 0;
-        n = 0;
-        x = 0;
-        list = data.d;
-        total = list.length;
-        $("#msg").text("Total:" + total);
-        //uploadNTAccount(data.d);
-        create();
-    });
-};
-/*
-function uploadNTAccount(AccountList) {
-alert(AccountList.length);
-total = AccountList.length;
-for (var i = 0; i < total; i++) {//AccountList.length
-var oneSales = AccountList[i];
-create(oneSales.SalesPerson);
-}
-};*/
-
-var total = 0;
-var m = 0;
-var n = 0;
-var l = 0;
-
-function create() {
-    if (x == total) {
-        return;
-    }
-    var item = list[x];
-    var metadata = {
-        __metadata: {
-            type: 'SP.Data.Sales_x0020_Person_x0020_ProfileListItem'
-        },
-        Title: item.SalesPerson,
-        Name: item.SalesPerson
-    }; //'i:0#.w|delta\\' +
-    $.ajax({
-        url: listUrl,
-        type: 'post',
-        data: JSON.stringify(metadata),
-        headers: {
+        };
+    } else {
+        return {
             "accept": "application/json;odata=verbose",
             "content-type": "application/json;odata=verbose",
             "content-length": metadata.length,
             "X-RequestDigest": digest
-        },
+        };
+    }
+};
+
+function ajaxpost(id, metadata, success = mySuccess, error = myError) {
+    var url = listUrl;
+    var isMerge = false;
+    if (id || id === 0) {
+        url = url + "(" + id + ")";
+        isMerge = true;
+    }
+    $.ajax({
+        url: url,
+        type: 'post',
+        data: JSON.stringify(metadata),
+        headers: getHeaders4Post(metadata, isMerge),
         dataType: 'json',
-        success: function(data) {
-            m++;
-            isDone();
-            x++;
-            create();
-        },
-        error: function(data) {
-            n++;
-            isDone();
-            x++;
-            create();
-        }
+        success: success,
+        error: error
     });
 };
-/*
-function create(title) {
-return;
-var metadata = { __metadata: { type: 'SP.Data.Sales_x0020_Person_x0020_ProfileListItem' }, Title: title, Name: title };//'i:0#.w|delta\\' +
-$.ajax({
-url: listUrl,
-type: 'post',
-data: JSON.stringify(metadata),
-headers: {
-"accept": "application/json;odata=verbose",
-"content-type": "application/json;odata=verbose",
-"content-length": metadata.length,
-"X-RequestDigest": digest
-},
-dataType: 'json',
-success: function (data) {
-m++;
-isDone();
-},
-error: function (data) {
-n++;
-isDone();
-}
-});
-};*/
 
-function isDone() {
+function ajaxget(url, success = firstCall) {
+    $.ajax({
+        url: url,
+        type: "get",
+        headers: headers4get,
+        success: success
+    });
+};
+
+function showMsg() {
     $("#msg").text("Total: " + total + "; success: " + m + "; error: " + n + "; miss: " + l);
 };

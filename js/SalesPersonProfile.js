@@ -11,6 +11,7 @@ var headers = {
 };
 var myPermissionFormUrl = mySalesPersonProfileConfig.myPermissionFormUrl;
 var myPermissionHelper = mySalesPersonProfileConfig.myPermissionHelper;
+var DomainAccountUrl = dataService + "vSalesPersonAccount4Profile/?$filter=ntaccount ne ''";
 
 var myApp = angular.module('myApp', ['ngMaterial']);
 myApp.controller("myPreCtrl", function($scope) {
@@ -88,7 +89,6 @@ myApp.controller("myCtrl", function($scope, $http) {
     function init() {
         if ($scope.isNew) {
             loadFromSpFields("checkbox");
-            var DomainAccountUrl = dataService + "vSalesPersonAccount4Profile/?$filter=ntaccount ne ''";
             loadData(DomainAccountUrl, "DomainAccounts");
         } else {
             loadFromSpFields("all");
