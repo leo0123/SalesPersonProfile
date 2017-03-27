@@ -13,9 +13,7 @@ var currentUserUrl = listServer + "_api/SP.UserProfiles.PeopleManager/GetMyPrope
 var profileListUrl = dataService + "vSalesPersonProfile";
 var queryActualBudgetUrl = dataService + "getActualBudget";
 var queryNextBatchNum = dataService + "getNextAdjustBatchNum";
-var headers = {
-    "accept": "application/json;odata=verbose"
-};
+var headers = myAdjustmentConfig.headers;
 
 var myApp = angular.module('myApp', ['ngMaterial']);
 myApp.controller("myPreCtrl", function($scope) {
