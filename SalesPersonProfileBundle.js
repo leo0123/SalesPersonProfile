@@ -6,7 +6,7 @@
 //require("./js/SalesProfileForm.js");
 require("./js/SalesPersonProfile.js");
 
-},{"./js/SalesPersonProfile.js":9}],2:[function(require,module,exports){
+},{"./js/SalesPersonProfile.js":10}],2:[function(require,module,exports){
 var Expression = require("./Expression.js");
 
 function CustomizeExpression(field) {
@@ -794,7 +794,7 @@ myPermissionCtrl = function($scope, $http, $location) {
 
 module.exports = myPermissionCtrl;//myPermissionApp;
 
-},{"./CustomizeExpressionManager.js":3,"./Expression.js":4,"./MyModel.js":6,"./ParseSql.js":8,"jquery":18}],8:[function(require,module,exports){
+},{"./CustomizeExpressionManager.js":3,"./Expression.js":4,"./MyModel.js":6,"./ParseSql.js":8,"jquery":21}],8:[function(require,module,exports){
 var Expression=require("./Expression.js");
 
 ParseSqlHelper = function () {
@@ -1085,104 +1085,114 @@ ParseSqlHelper = function () {
 module.exports=ParseSqlHelper;
 
 },{"./Expression.js":4}],9:[function(require,module,exports){
+var mySPField = {};
+
+var constructorList = {};
+constructorList.SPTEXTField = SPTEXTField;
+constructorList.SPCHECKField = SPCHECKField;
+constructorList.SPARRAYField = SPARRAYField;
+
+mySPField.factory = function(title, type = "text", ngField){
+    type = "SP" + type.toUpperCase() + "Field";
+    var spField = new constructorList[type](title, ngField);
+    return spField;
+};
+
+function SPField(title, type = "text", ngField) {
+    this.title = title;
+    this.type = type;
+    this.ngField = ngField;
+};
+SPField.prototype.initControl = function($) {
+    if (!this.control) {
+        this.control = $("[title='" + this.title + "']");
+    }
+};
+SPField.prototype.getValue = function() {
+    return this.control.val();
+};
+SPField.prototype.setValue = function(value) {
+    this.control.val(value);
+};
+
+function SPTEXTField(title, ngField) {
+    SPField.call(this, title, "text", ngField);
+};
+SPTEXTField.prototype = Object.create(SPField.prototype);
+SPTEXTField.prototype.constructor = SPTEXTField;
+
+function SPCHECKField(title, ngField) {
+    SPField.call(this, title, "checkbox", ngField);
+};
+SPCHECKField.prototype = Object.create(SPField.prototype);
+SPCHECKField.prototype.constructor = SPCHECKField;
+SPCHECKField.prototype.getValue = function() {
+    return this.control.prop("checked");
+};
+SPCHECKField.prototype.setValue = function(value) {
+    this.control.prop("checked", value);
+};
+
+function SPARRAYField(title, ngField) {
+    SPField.call(this, title, "array", ngField);
+};
+SPARRAYField.prototype = Object.create(SPField.prototype);
+SPARRAYField.prototype.constructor = SPARRAYField;
+SPARRAYField.prototype.getValue = function() {
+    return this.control.val().split(",");
+};
+SPARRAYField.prototype.setValue = function(value) {
+    this.control.val(value);
+};
+
+module.exports = mySPField;
+
+},{}],10:[function(require,module,exports){
 var angular = require("angular");
 var $ = require("jquery");
 require("angular-material");
 var myPermissionCtrl = require("./MyPermissionCtrl.js");
+var SPPFieldsConfig = require("./SalesPersonProfileFields.js")
+var myUtility = require("./Utility.js")
 
-var myFormUrl = mySalesPersonProfileConfig.myFormUrl;
-var SPUserProfileUrl = mySalesPersonProfileConfig.SPUserProfileUrl;
-var dataService = mySalesPersonProfileConfig.dataService;
+var config = mySalesPersonProfileConfig;
+var myFormUrl = config.myForm;
+var myPermissionFormUrl = config.myPermissionForm;
+
+var SPServer = config.SPServer;
+var SPUserProfile = config.SPUserProfile;
+var SPPList = config.SalesPersonProfileList;
+
+var dataService = config.dataService;
+
+var myPermissionHelper = config.myPermissionHelper;
+
 var headers = {
     "accept": "application/json;odata=verbose"
 };
-var myPermissionFormUrl = mySalesPersonProfileConfig.myPermissionFormUrl;
-var myPermissionHelper = mySalesPersonProfileConfig.myPermissionHelper;
+var DomainAccountUrl = dataService + "vSalesPersonAccount4Profile/?$filter=ntaccount ne ''";
+var listName = "SalesPersonProfile";
+var fieldsHelper = myUtility.FieldsHelper;
 
 var myApp = angular.module('myApp', ['ngMaterial']);
 myApp.controller("myPreCtrl", function($scope) {
-    $scope.myFormReady = function() {
-
-    };
     $scope.myFormUrl = myFormUrl;
 });
 myApp.controller("myPermissionCtrl", myPermissionCtrl);
 myApp.controller("myCtrl", function($scope, $http) {
-    var spFields = {};
-    initSpFields();
     $scope.isReadOnly = false;
     $scope.isNew = $("#myFormType").text() == "new" ? true : false;
     var msg = $("#msg");
 
-    function initSpFields() {
-        configSpFields(spFields);
-        for (var key in spFields) {
-            spFields[key].control = $("[title='" + spFields[key].title + "']");
-        }
-    };
-
-    function saveToSpFields(type) {
-        if (type == "checkbox") {
-            var spCheckFields = filterSpFields(type);
-            for (var key in spCheckFields) {
-                spCheckFields[key].control.prop("checked", $scope[key]);
-            }
-        } else if (type == "text" || type == "array") {
-            var spTextFields = filterSpFields(type);
-            for (var key in spTextFields) {
-                spTextFields[key].control.val($scope[key]);
-            }
-        } else if (type == "all") {
-            saveToSpFields("checkbox");
-            saveToSpFields("text");
-            saveToSpFields("array");
-        }
-    };
-
-    function loadFromSpFields(type) {
-        if (type == "checkbox") {
-            var list = filterSpFields(type);
-            for (var key in list) {
-                $scope[key] = list[key].control.prop("checked");
-            }
-        } else if (type == "text") {
-            var list = filterSpFields(type);
-            for (var key in list) {
-                $scope[key] = list[key].control.val();
-            }
-        } else if (type == "array") {
-            var list = filterSpFields(type);
-            for (var key in list) {
-                $scope[key] = list[key].control.val().split(",");
-            }
-        } else if (type == "all") {
-            loadFromSpFields("checkbox");
-            loadFromSpFields("text");
-            loadFromSpFields("array");
-        }
-    };
-
-    function filterSpFields(type) {
-        var tmpSpFields = {};
-        for (var key in spFields) {
-            if (spFields[key].type == type) {
-                tmpSpFields[key] = spFields[key];
-            }
-        }
-        return tmpSpFields;
-    };
-
     function init() {
+        fieldsHelper.init($http,$scope,SPPFieldsConfig,SPPList,SPServer);
         if ($scope.isNew) {
-            loadFromSpFields("checkbox");
-            var DomainAccountUrl = dataService + "vSalesPersonAccount4Profile/?$filter=ntaccount ne ''";
             loadData(DomainAccountUrl, "DomainAccounts");
         } else {
-            loadFromSpFields("all");
+            fieldsHelper.loadFromSP(null, myError);
             $scope.loadSalesOrg(true);
             $scope.loadDivision(true);
         }
-        //$scope.myPermissionFormUrl = myPermissionFormUrl;
     };
 
     function loadData(url, optionName, mySuccess) {
@@ -1218,7 +1228,7 @@ myApp.controller("myCtrl", function($scope, $http) {
         for (var key in tmp) {
             $scope[key] = tmp[key];
         }
-        var aSPUserProfileUrl = SPUserProfileUrl + "'delta\\" + d.ntaccount + "'";
+        var aSPUserProfileUrl = SPUserProfile + "'delta\\" + d.ntaccount + "'";
         loadData(aSPUserProfileUrl, null, loadSPUserProfileSuccess);
     };
 
@@ -1231,9 +1241,15 @@ myApp.controller("myCtrl", function($scope, $http) {
         var tmp = {};
         tmp.Name = d.DisplayName;
         tmp.Email = d.Email;
-        tmp.BG = d.UserProfileProperties.results.find(getDept).Value;
-        tmp.Company = d.UserProfileProperties.results.find(getCom).Value;
-        tmp.Office = d.UserProfileProperties.results.find(getOffice).Value;
+        tmp.BG = d.UserProfileProperties.results.find(function (prop) {
+            return prop.Key == "Department";
+        }).Value;
+        tmp.Company = d.UserProfileProperties.results.find(function (prop) {
+            return prop.Key == "Company";
+        }).Value;
+        tmp.Office = d.UserProfileProperties.results.find(function (prop) {
+            return prop.Key == "Office";
+        }).Value;
         for (var key in tmp) {
             $scope[key] = tmp[key];
             //spFields[key].val(tmp[key]);
@@ -1343,20 +1359,33 @@ myApp.controller("myCtrl", function($scope, $http) {
 
     init();
     $("#btSave").click(function() {
-        $("[value='Save']:first").click();
+        //$("[value='Save']:first").click();
+        save();
     });
     $("#btCancel").click(function() {
         $("[value='Cancel']:first").click();
     });
+
+    function save() {
+        if ($scope.isNew && $scope.DomainAccount != $scope.selectedDomainAccount.ntaccount) {
+            msg.text("change Domain Account incompleted");
+            return;
+        }
+        fieldsHelper.saveToSP(listName, !$scope.isNew, function() {
+            msg.text("saved");
+        });
+    };
     PreSaveAction = function() {
         //TODO check exist
-        saveToSpFields("all");
+        //saveToSpFields("all");
         //return false;
-        if ($scope.isNew && $scope.DomainAccount != $scope.selectedDomainAccount.ntaccount) {
+        save();
+        return false;
+        /*if ($scope.isNew && $scope.DomainAccount != $scope.selectedDomainAccount.ntaccount) {
             msg.text("change Domain Account incompleted");
             return false;
         }
-        return true;
+        return true;*/
     };
     $scope.openPermissionEditor = function() {
         if (!$scope.myPermissionFormUrl) {
@@ -1366,7 +1395,7 @@ myApp.controller("myCtrl", function($scope, $http) {
                     $scope.Permission = Permission;
                     $scope.JSONStr = JSONStr;
                 };
-                myPermissionHelper.close = function(){
+                myPermissionHelper.close = function() {
                     $scope.showPermission = false;
                 };
                 $scope.openPermissionEditor();
@@ -1376,100 +1405,228 @@ myApp.controller("myCtrl", function($scope, $http) {
             myPermissionHelper.load($scope.BG, $scope.Permission, $scope.JSONStr);
         }
     };
-
-    function getDept(prop) {
-        return prop.Key == "Department";
-    };
-
-    function getCom(prop) {
-        return prop.Key == "Company";
-    };
-
-    function getOffice(prop) {
-        return prop.Key == "Office";
-    };
 });
 
-function configSpFields(spFields) {
-    spFields.PortalSalesRole = {
-        title: "Portal Sales Role",
-        type: "checkbox"
-    };
-    spFields.ApplyEmployeeID = {
-        title: "Apply Employee ID",
-        type: "checkbox"
-    };
-    spFields.ApplySAPAccount = {
-        title: "Apply SAP Account",
-        type: "checkbox"
-    };
-    spFields.Company = {
-        title: "Company",
-        type: "text"
-    };
-    spFields.SalesOrg = {
-        title: "Sales Org",
-        type: "array"
-    };
-    spFields.Division = {
-        title: "Division",
-        type: "array"
-    };
-    spFields.DomainAccount = {
-        title: "Domain Account Required Field",
-        type: "text"
-    };
-    spFields.Name = {
-        title: "Name Required Field",
-        type: "text"
-    };
-    spFields.Department = {
-        title: "Department",
-        type: "text"
-    };
-    spFields.Email = {
-        title: "Email",
-        type: "text"
-    };
-    spFields.EmployeeID = {
-        title: "Employee ID",
-        type: "text"
-    };
-    spFields.EmployeeCode = {
-        title: "Employee Code",
-        type: "text"
-    };
-    spFields.SalesP = {
-        title: "SalesP",
-        type: "text"
-    };
-    spFields.Status = {
-        title: "Status",
-        type: "text"
-    };
-    spFields.TerminateDate = {
-        title: "Terminate Date",
-        type: "text"
-    };
-    spFields.Office = {
-        title: "Office",
-        type: "text"
-    };
-    spFields.Permission = {
-        title: "Permission",
-        type: "text"
-    };
-    spFields.JSONStr = {
-        title: "JSONStr",
-        type: "text"
-    };
-    spFields.BG = {
-        title: "BG",
-        type: "text"
-    };
+},{"./MyPermissionCtrl.js":7,"./SalesPersonProfileFields.js":11,"./Utility.js":12,"angular":20,"angular-material":18,"jquery":21}],11:[function(require,module,exports){
+var SPPFieldsConfig = {
+    DomainAccount: {
+        //SPFieldName : "DomainAccount",
+        //ngFieldName : "DomainAccount",
+        //ngFieldType : "text",
+    },
+    Name: {},
+    BG: {},
+    Company: {},
+    Email: {},
+    EmployeeID: {},
+    EmployeeCode: {},
+    SalesP: {},
+    OldEmail: {
+        ngFieldType: "array",
+    },
+    OldSAPID: {
+        ngFieldType: "array",
+    },
+    OtherAccount: {
+        ngFieldType: "array",
+    },
+    RequestPermission: {},
+    EffectivePermission: {},
+    TerminateDate: {},
+    Status: {},
+    Office: {},
+    PortalSalesRole: {},
+    ApplySAPAccount: {},
+    SalesOrg: {
+        ngFieldType: "array",
+    },
+    Division: {
+        ngFieldType: "array",
+    },
 };
 
-},{"./MyPermissionCtrl.js":7,"angular":17,"angular-material":15,"jquery":18}],10:[function(require,module,exports){
+module.exports = SPPFieldsConfig;
+
+},{}],12:[function(require,module,exports){
+var mySPField = require("./SPField.js")
+
+var myUtility = {};
+
+myUtility.getParam = function(paramName) {
+    var url = window.location.href;
+    var startIndex = url.indexOf("?");
+    paramName = paramName + "=";
+    var i = url.indexOf(paramName, startIndex);
+    if (i < 0) {
+        return "";
+    }
+    var j = url.indexOf("&", i);
+    i = i + paramName.length;
+    var param;
+    if (j > 0) {
+        param = url.substring(i, j);
+    } else {
+        param = url.substring(i);
+    }
+    while (param.includes("%20")) {
+        param = param.replace("%20", " ");
+    };
+    return param;
+};
+
+myUtility.SPHelper = {};
+var SPFields = {};
+
+function init(SPFieldsConfig, $) {
+    for (var key in SPFieldsConfig) {
+        var SPFieldConfig = SPFieldsConfig[key];
+        SPFields[key] = mySPField.factory(SPFieldConfig.title, SPFieldConfig.type);
+    }
+    for (var key in SPFields) {
+        var SPField = SPFields[key];
+        SPField.initControl($);
+        SPField.ngField = SPField.ngField ? SPField.ngField : key;
+    }
+};
+myUtility.SPHelper.loadFromSpFields = function(SPFieldsConfig, $, $scope) {
+    init(SPFieldsConfig, $);
+    for (var key in SPFields) {
+        var SPField = SPFields[key];
+        $scope[SPField.ngField] = SPField.getValue();
+    }
+};
+myUtility.SPHelper.copyToSpFields = function($scope) {
+    for (var key in SPFields) {
+        var SPField = SPFields[key];
+        SPField.setValue($scope[SPField.ngField]);
+    }
+};
+
+var headers = {
+    "accept": "application/json;odata=verbose"
+};
+myUtility.FieldsHelper = {};
+
+function initFields(fieldsConfig) {
+    for (var key in fieldsConfig) {
+        var obj = fieldsConfig[key];
+        if (!obj.SPFieldName) {
+            obj.SPFieldName = key;
+        }
+        if (!obj.ngFieldName) {
+            obj.ngFieldName = key;
+        }
+        if (!obj.ngFieldType) {
+            obj.ngFieldType = "text";
+        }
+    }
+};
+var helper;
+myUtility.FieldsHelper.init = function(_$http, _$scope, _fieldsConfig, _SPList, SPServer) {
+    helper = {
+        $http: _$http,
+        $scope: _$scope,
+        fieldsConfig: _fieldsConfig,
+        SPList: _SPList
+    };
+    initFields(_fieldsConfig);
+    getFormDigestService(SPServer);
+};
+myUtility.FieldsHelper.loadFromSP = function(success, error) {
+    if (!helper) {
+        console.log("FieldsHelper need init first");
+    }
+    var id = myUtility.getParam("ID");
+    helper.itemUrl = helper.SPList + "(" + id + ")";
+    httpget(helper.itemUrl, function(response) {
+        var d = response.data.d;
+        var fieldsConfig = helper.fieldsConfig;
+        var $scope = helper.$scope;
+        for (var key in fieldsConfig) {
+            var obj = fieldsConfig[key];
+            var value = d[obj.SPFieldName];
+            if (value || value === false) {
+                if (obj.ngFieldType === "text") {
+                    $scope[obj.ngFieldName] = value;
+                } else if (obj.ngFieldType === "array") {
+                    $scope[obj.ngFieldName] = value.split(",");
+                }
+            }
+        }
+        if (success) {
+            success();
+        }
+    }, error);
+};
+myUtility.FieldsHelper.saveToSP = function(listName, isMerge, success, error) {
+    if (!helper) {
+        console.log("FieldsHelper need init first");
+    }
+    var metadata;
+    metadata = {
+        __metadata: {
+            type: "SP.Data." + listName + "ListItem"
+        },
+    };
+    for (var key in fieldsConfig) {
+        var obj = fieldsConfig[key];
+        metadata[obj.SPFieldName] = $scope[obj.ngFieldName].toString();
+    }
+    httppost(metadata, isMerge, success, error);
+};
+
+function httppost(metadata, isMerge, success, error) {
+    helper.$http({
+        method: "POST",
+        url: helper.itemUrl,
+        data: JSON.stringify(metadata),
+        headers: getHeaders4Post(metadata, isMerge),
+        dataType: 'json',
+    }).then(success, error);
+};
+
+function getHeaders4Post(metadata, isMerge) {
+    if (isMerge) {
+        return {
+            "X-HTTP-Method": "MERGE",
+            "IF-MATCH": "*",
+            "accept": "application/json;odata=verbose",
+            "content-type": "application/json;odata=verbose",
+            "content-length": metadata.length,
+            "X-RequestDigest": digest
+        };
+    } else {
+        return {
+            "accept": "application/json;odata=verbose",
+            "content-type": "application/json;odata=verbose",
+            "content-length": metadata.length,
+            "X-RequestDigest": digest
+        };
+    }
+};
+
+function getFormDigestService(SPServer) {
+    helper.$http({
+        url: SPServer + "_api/contextinfo",
+        method: 'POST',
+        data: '',
+        headers: headers,
+    }).then(function(response) {
+        helper.digest = response.data.d.GetContextWebInformation.FormDigestValue;
+    });
+};
+
+function httpget(url, success, error) {
+    helper.$http({
+        method: "GET",
+        url: url,
+        headers: headers
+    }).then(success, error);
+};
+
+module.exports = myUtility;
+
+},{"./SPField.js":9}],13:[function(require,module,exports){
 /**
  * @license AngularJS v1.6.1
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -5625,11 +5782,11 @@ angular.module('ngAnimate', [], function initAngularHelpers() {
 
 })(window, window.angular);
 
-},{}],11:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 require('./angular-animate');
 module.exports = 'ngAnimate';
 
-},{"./angular-animate":10}],12:[function(require,module,exports){
+},{"./angular-animate":13}],15:[function(require,module,exports){
 /**
  * @license AngularJS v1.6.1
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -6033,11 +6190,11 @@ ngAriaModule.directive('ngShow', ['$aria', function($aria) {
 
 })(window, window.angular);
 
-},{}],13:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 require('./angular-aria');
 module.exports = 'ngAria';
 
-},{"./angular-aria":12}],14:[function(require,module,exports){
+},{"./angular-aria":15}],17:[function(require,module,exports){
 /*!
  * Angular Material Design
  * https://github.com/angular/material
@@ -41787,7 +41944,7 @@ angular.module("material.core").constant("$MD_THEME_CSS", "md-autocomplete.md-TH
 
 
 })(window, window.angular);;window.ngMaterial={version:{full: "1.1.3"}};
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 // Should already be required, here for clarity
 require('angular');
 
@@ -41801,7 +41958,7 @@ require('./angular-material');
 // Export namespace
 module.exports = 'ngMaterial';
 
-},{"./angular-material":14,"angular":17,"angular-animate":11,"angular-aria":13}],16:[function(require,module,exports){
+},{"./angular-material":17,"angular":20,"angular-animate":14,"angular-aria":16}],19:[function(require,module,exports){
 /**
  * @license AngularJS v1.6.1
  * (c) 2010-2016 Google, Inc. http://angularjs.org
@@ -74784,11 +74941,11 @@ $provide.value("$locale", {
 })(window);
 
 !window.angular.$$csp().noInlineStyle && window.angular.element(document.head).prepend('<style type="text/css">@charset "UTF-8";[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}ng\\:form{display:block;}.ng-animate-shim{visibility:hidden;}.ng-anchor{position:absolute;}</style>');
-},{}],17:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 require('./angular');
 module.exports = angular;
 
-},{"./angular":16}],18:[function(require,module,exports){
+},{"./angular":19}],21:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v3.1.1
  * https://jquery.com/

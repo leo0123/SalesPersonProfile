@@ -1,17 +1,17 @@
 <!--for new/edit form-->
-<link href="/SitePages/SalesPersonProfileBundle.css" rel="stylesheet" />
-<script src="/SitePages/SalesPersonProfileConfig.js"></script>
-<script src="/SitePages/SalesPersonProfileBundle.js"></script>
+<link href="/sites/MyDelta/SiteAssets/SPP/SalesPersonProfileBundle.css" rel="stylesheet" />
+<script src="/sites/MyDelta/SiteAssets/SPP/SalesPersonProfileConfig.js"></script>
+<script src="/sites/MyDelta/SiteAssets/SPP/SalesPersonProfileBundle.js"></script>
 
 <div ng-app="myApp" ng-controller="myPreCtrl">
     <div id="myFormType" style="display:none;">new/edit</div>
-    <div ng-include="myFormUrl" onload="myFormReady()"></div>
+    <div ng-include="myFormUrl"></div>
 </div>
 
 
 <!--for display form-->
-<script src="/SitePages/SalesPersonProfileConfig.js"></script>
-<script src="/SitePages/SalesPersonProfileDisplayBundle.js"></script>
+<script src="/sites/MyDelta/SiteAssets/SPP/SalesPersonProfileConfig.js"></script>
+<script src="/sites/MyDelta/SiteAssets/SPP/SalesPersonProfileDisplayBundle.js"></script>
 
 <div ng-app="myApp" ng-controller="myPreCtrl">
     <div ng-include="myFormUrl"></div>

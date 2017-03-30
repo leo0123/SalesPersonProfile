@@ -60,10 +60,6 @@
 			</td>
 		</tr>
 		<tr>
-			<td>Apply Employee ID</td>
-			<td><md-checkbox ng-model="ApplyEmployeeID"></md-checkbox></td>
-		</tr>
-		<tr>
 			<td>Apply SAP Account</td>
 			<td><md-checkbox ng-model="ApplySAPAccount"></md-checkbox></td>
 		</tr>
@@ -74,7 +70,7 @@
 					<md-select ng-model="SalesOrg" md-on-open="loadSalesOrg(false)" ng-change="SalesOrgChanged()" multiple placeholder="Select Sales Org">
 						<md-option ng-value="item.ORG" ng-repeat="item in SalesOrgs">{{item.ORG}}</md-option>
 					</md-select>
-				</md-input-container>
+				</md-input-container>{{SalesOrg}}
 			</td>
 		</tr>
 		<tr>
@@ -84,7 +80,7 @@
 					<md-select ng-model="Division" md-on-open="loadDivision(false)" multiple placeholder="Select Division">
 						<md-option ng-value="item" ng-repeat="item in Divisions">{{item}}</md-option>
 					</md-select>
-				</md-input-container>
+				</md-input-container>{{Division}}
 			</td>
 		</tr>
 		<tr>
@@ -93,9 +89,13 @@
 					<input type="button" value="Edit Permission" ng-click="openPermissionEditor()" class="ms-ButtonHeightWidth" target="_self"/>
 			</td>
 			<td>
-					<md-content>{{Permission}}</md-content>
+					<md-content>{{RequestPermission}}</md-content>
 					<div ng-show="showPermission" ng-init="showPermission=false" style="position:relative;" ng-include="myPermissionFormUrl"  onload="myPermissionFormReady()"></div>
 			</td>
+		</tr>
+		<tr>
+			<td>Effective Permission</td>
+			<td><md-content>{{EffectivePermission}}</md-content></td>
 		</tr>
 	</table>
 </div>

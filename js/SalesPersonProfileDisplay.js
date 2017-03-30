@@ -29,7 +29,7 @@ myApp.controller("myCtrl", function($scope, $http) {
     $scope.btName = "load customers";
     $scope.showSalesCustomer = function() {
         if ($scope.btName == "load customers") {
-            var NTAccount = getFeildValue("Title");
+            var NTAccount = getFeildValue("DomainAccount");
             //var BG = getFeildValue("BG");
             //var Company = getFeildValue("Company");
             $scope.adjustUrl = adjustUrl;

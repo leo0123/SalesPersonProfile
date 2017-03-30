@@ -2,100 +2,47 @@ var angular = require("angular");
 var $ = require("jquery");
 require("angular-material");
 var myPermissionCtrl = require("./MyPermissionCtrl.js");
+var SPPFieldsConfig = require("./SalesPersonProfileFields.js")
+var myUtility = require("./Utility.js")
 
-var myFormUrl = mySalesPersonProfileConfig.myFormUrl;
-var SPUserProfileUrl = mySalesPersonProfileConfig.SPUserProfileUrl;
-var dataService = mySalesPersonProfileConfig.dataService;
+var config = mySalesPersonProfileConfig;
+var myFormUrl = config.myForm;
+var myPermissionFormUrl = config.myPermissionForm;
+
+var SPServer = config.SPServer;
+var SPUserProfile = config.SPUserProfile;
+var SPPList = config.SalesPersonProfileList;
+
+var dataService = config.dataService;
+
+var myPermissionHelper = config.myPermissionHelper;
+
 var headers = {
     "accept": "application/json;odata=verbose"
 };
-var myPermissionFormUrl = mySalesPersonProfileConfig.myPermissionFormUrl;
-var myPermissionHelper = mySalesPersonProfileConfig.myPermissionHelper;
 var DomainAccountUrl = dataService + "vSalesPersonAccount4Profile/?$filter=ntaccount ne ''";
+var listName = "SalesPersonProfile";
+var fieldsHelper = myUtility.FieldsHelper;
 
 var myApp = angular.module('myApp', ['ngMaterial']);
 myApp.controller("myPreCtrl", function($scope) {
-    $scope.myFormReady = function() {
-
-    };
     $scope.myFormUrl = myFormUrl;
 });
 myApp.controller("myPermissionCtrl", myPermissionCtrl);
 myApp.controller("myCtrl", function($scope, $http) {
-    var spFields = {};
-    initSpFields();
     $scope.isReadOnly = false;
     $scope.isNew = $("#myFormType").text() == "new" ? true : false;
     var msg = $("#msg");
 
-    function initSpFields() {
-        configSpFields(spFields);
-        for (var key in spFields) {
-            spFields[key].control = $("[title='" + spFields[key].title + "']");
-        }
-    };
-
-    function saveToSpFields(type) {
-        if (type == "checkbox") {
-            var spCheckFields = filterSpFields(type);
-            for (var key in spCheckFields) {
-                spCheckFields[key].control.prop("checked", $scope[key]);
-            }
-        } else if (type == "text" || type == "array") {
-            var spTextFields = filterSpFields(type);
-            for (var key in spTextFields) {
-                spTextFields[key].control.val($scope[key]);
-            }
-        } else if (type == "all") {
-            saveToSpFields("checkbox");
-            saveToSpFields("text");
-            saveToSpFields("array");
-        }
-    };
-
-    function loadFromSpFields(type) {
-        if (type == "checkbox") {
-            var list = filterSpFields(type);
-            for (var key in list) {
-                $scope[key] = list[key].control.prop("checked");
-            }
-        } else if (type == "text") {
-            var list = filterSpFields(type);
-            for (var key in list) {
-                $scope[key] = list[key].control.val();
-            }
-        } else if (type == "array") {
-            var list = filterSpFields(type);
-            for (var key in list) {
-                $scope[key] = list[key].control.val().split(",");
-            }
-        } else if (type == "all") {
-            loadFromSpFields("checkbox");
-            loadFromSpFields("text");
-            loadFromSpFields("array");
-        }
-    };
-
-    function filterSpFields(type) {
-        var tmpSpFields = {};
-        for (var key in spFields) {
-            if (spFields[key].type == type) {
-                tmpSpFields[key] = spFields[key];
-            }
-        }
-        return tmpSpFields;
-    };
-
     function init() {
+        fieldsHelper.init($http,$scope,SPPFieldsConfig,SPPList,SPServer);
         if ($scope.isNew) {
-            loadFromSpFields("checkbox");
             loadData(DomainAccountUrl, "DomainAccounts");
         } else {
-            loadFromSpFields("all");
+            fieldsHelper.loadFromSP(null, myError);
             $scope.loadSalesOrg(true);
             $scope.loadDivision(true);
         }
-        //$scope.myPermissionFormUrl = myPermissionFormUrl;
     };
 
     function loadData(url, optionName, mySuccess) {
@@ -131,7 +78,7 @@ myApp.controller("myCtrl", function($scope, $http) {
         for (var key in tmp) {
             $scope[key] = tmp[key];
         }
-        var aSPUserProfileUrl = SPUserProfileUrl + "'delta\\" + d.ntaccount + "'";
+        var aSPUserProfileUrl = SPUserProfile + "'delta\\" + d.ntaccount + "'";
         loadData(aSPUserProfileUrl, null, loadSPUserProfileSuccess);
     };
 
@@ -144,9 +91,15 @@ myApp.controller("myCtrl", function($scope, $http) {
         var tmp = {};
         tmp.Name = d.DisplayName;
         tmp.Email = d.Email;
-        tmp.BG = d.UserProfileProperties.results.find(getDept).Value;
-        tmp.Company = d.UserProfileProperties.results.find(getCom).Value;
-        tmp.Office = d.UserProfileProperties.results.find(getOffice).Value;
+        tmp.BG = d.UserProfileProperties.results.find(function (prop) {
+            return prop.Key == "Department";
+        }).Value;
+        tmp.Company = d.UserProfileProperties.results.find(function (prop) {
+            return prop.Key == "Company";
+        }).Value;
+        tmp.Office = d.UserProfileProperties.results.find(function (prop) {
+            return prop.Key == "Office";
+        }).Value;
         for (var key in tmp) {
             $scope[key] = tmp[key];
             //spFields[key].val(tmp[key]);
@@ -256,20 +209,33 @@ myApp.controller("myCtrl", function($scope, $http) {
 
     init();
     $("#btSave").click(function() {
-        $("[value='Save']:first").click();
+        //$("[value='Save']:first").click();
+        save();
     });
     $("#btCancel").click(function() {
         $("[value='Cancel']:first").click();
     });
+
+    function save() {
+        if ($scope.isNew && $scope.DomainAccount != $scope.selectedDomainAccount.ntaccount) {
+            msg.text("change Domain Account incompleted");
+            return;
+        }
+        fieldsHelper.saveToSP(listName, !$scope.isNew, function() {
+            msg.text("saved");
+        });
+    };
     PreSaveAction = function() {
         //TODO check exist
-        saveToSpFields("all");
+        //saveToSpFields("all");
         //return false;
-        if ($scope.isNew && $scope.DomainAccount != $scope.selectedDomainAccount.ntaccount) {
+        save();
+        return false;
+        /*if ($scope.isNew && $scope.DomainAccount != $scope.selectedDomainAccount.ntaccount) {
             msg.text("change Domain Account incompleted");
             return false;
         }
-        return true;
+        return true;*/
     };
     $scope.openPermissionEditor = function() {
         if (!$scope.myPermissionFormUrl) {
@@ -279,7 +245,7 @@ myApp.controller("myCtrl", function($scope, $http) {
                     $scope.Permission = Permission;
                     $scope.JSONStr = JSONStr;
                 };
-                myPermissionHelper.close = function(){
+                myPermissionHelper.close = function() {
                     $scope.showPermission = false;
                 };
                 $scope.openPermissionEditor();
@@ -289,95 +255,4 @@ myApp.controller("myCtrl", function($scope, $http) {
             myPermissionHelper.load($scope.BG, $scope.Permission, $scope.JSONStr);
         }
     };
-
-    function getDept(prop) {
-        return prop.Key == "Department";
-    };
-
-    function getCom(prop) {
-        return prop.Key == "Company";
-    };
-
-    function getOffice(prop) {
-        return prop.Key == "Office";
-    };
 });
-
-function configSpFields(spFields) {
-    spFields.PortalSalesRole = {
-        title: "Portal Sales Role",
-        type: "checkbox"
-    };
-    spFields.ApplyEmployeeID = {
-        title: "Apply Employee ID",
-        type: "checkbox"
-    };
-    spFields.ApplySAPAccount = {
-        title: "Apply SAP Account",
-        type: "checkbox"
-    };
-    spFields.Company = {
-        title: "Company",
-        type: "text"
-    };
-    spFields.SalesOrg = {
-        title: "Sales Org",
-        type: "array"
-    };
-    spFields.Division = {
-        title: "Division",
-        type: "array"
-    };
-    spFields.DomainAccount = {
-        title: "Domain Account Required Field",
-        type: "text"
-    };
-    spFields.Name = {
-        title: "Name Required Field",
-        type: "text"
-    };
-    spFields.Department = {
-        title: "Department",
-        type: "text"
-    };
-    spFields.Email = {
-        title: "Email",
-        type: "text"
-    };
-    spFields.EmployeeID = {
-        title: "Employee ID",
-        type: "text"
-    };
-    spFields.EmployeeCode = {
-        title: "Employee Code",
-        type: "text"
-    };
-    spFields.SalesP = {
-        title: "SalesP",
-        type: "text"
-    };
-    spFields.Status = {
-        title: "Status",
-        type: "text"
-    };
-    spFields.TerminateDate = {
-        title: "Terminate Date",
-        type: "text"
-    };
-    spFields.Office = {
-        title: "Office",
-        type: "text"
-    };
-    spFields.Permission = {
-        title: "Permission",
-        type: "text"
-    };
-    spFields.JSONStr = {
-        title: "JSONStr",
-        type: "text"
-    };
-    spFields.BG = {
-        title: "BG",
-        type: "text"
-    };
-};

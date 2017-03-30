@@ -1,22 +1,14 @@
-
-//var myHtmlPath = "../html/";//~/SitePages/
-//var mySPListServer = "http://amdpfwfe02:9999/";
-/*var myConfig = {
-    serviceUrl: "http://amdpfweb02:8080/SAPBW3DataService.svc/",
-  	digestUrl: mySPListServer + "_api/contextinfo",
-  	permissionHtmlUrl: myHtmlPath+"permission.html",
-  	SalesOrgHtmlUrl: myHtmlPath+"SalesOrg.html",
-  	DivisionHtmlUrl: myHtmlPath+"Division.html",
-  	DomainAccountHtmlUrl: myHtmlPath+"DomainAccount.html",
-  	listServer: mySPListServer,
-  	SPUserProfileUrl: mySPListServer + "_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v=" //'delta\username'
-};*/
 var mySalesPersonProfileConfig = mySalesPersonProfileConfig || {};
-mySalesPersonProfileConfig.myFormUrl = '/SitePages/MySalesPersonProfileForm.html';
+
+mySalesPersonProfileConfig.SPPPath = "/sites/MyDelta/SiteAssets/SPP/";
+mySalesPersonProfileConfig.myForm = mySalesPersonProfileConfig.SPPPath + 'MySalesPersonProfileForm.html';
+mySalesPersonProfileConfig.myPermissionForm = mySalesPersonProfileConfig.SPPPath + 'MyPermissionForm.html';
+mySalesPersonProfileConfig.myDisplaySectionUrl = mySalesPersonProfileConfig.SPPPath + 'MySalesPersonProfileDisplay.html';
+
+mySalesPersonProfileConfig.SPServer = "http://sp2013portal.delta-corp.com/sites/MyDelta/";
+mySalesPersonProfileConfig.SPUserProfile = mySalesPersonProfileConfig.SPServer + "_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v=" //'delta\username'
+mySalesPersonProfileConfig.SalesPersonProfileList = mySalesPersonProfileConfig.SPServer + "_api/web/lists/GetByTitle('Sales Person Profile')/items";
+
 mySalesPersonProfileConfig.dataService = "http://amdpfweb02:9999/SAPBW3DataService.svc/";
-mySalesPersonProfileConfig.SPListServer = "http://amdpfwfe02:9999/";
-mySalesPersonProfileConfig.SPUserProfileUrl = mySalesPersonProfileConfig.SPListServer + "_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v=" //'delta\username'
-mySalesPersonProfileConfig.myPermissionFormUrl = '/SitePages/MyPermissionForm.html';
+
 mySalesPersonProfileConfig.myPermissionHelper = {};
-mySalesPersonProfileConfig.myDisplaySectionUrl = '/SitePages/MySalesPersonProfileDisplay.html';
-//module.exports=myConfig;

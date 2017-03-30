@@ -1,8 +1,8 @@
 ﻿
 var dataService = "http://amdpfweb02:9999/SAPBW3DataService.svc/";
 var dataUrlNewNtAccount = dataService + "vSalesAccount4LoadProfile";
-var dataUrlHr = dataService + "vSalesHrInfo4LoadProfile"; ///?$filter=ID ge 1";
-var dataUrlOldAccount = dataService + "vEmployee_Account4LoadProfile?$orderby=ID";
+var dataUrlHr = dataService + "vSalesHrInfo4LoadProfile?$filter=EmployeeCode eq ''";
+var dataUrlOldAccount = dataService + "vEmployee_Account4LoadProfile?$orderby=ID&$filter=OldSAPID eq '' and OldEmail eq '' and OtherAccount eq ''";
 var dataUrlUsersLine = dataService + "vUsersLine4LoadProfile";
 var dataUrlSalesOrgDivision = dataService + "vSalesOrgDivision4LoadProfile?$orderby=ID";
 var listServer = "http://sp2013portal.delta-corp.com/sites/MyDelta/";
@@ -30,8 +30,8 @@ $(function() {
     var type;
     //type = "NTAccount";
     //type = "HR"
-    //type = "OldAccount";
-    type = "ADInfo"
+    type = "OldAccount";
+    //type = "ADInfo"
     switch (type) {
         case "NTAccount":
             url4GetData = dataUrlNewNtAccount;
