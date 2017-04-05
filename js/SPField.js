@@ -5,7 +5,7 @@ constructorList.SPTEXTField = SPTEXTField;
 constructorList.SPCHECKField = SPCHECKField;
 constructorList.SPARRAYField = SPARRAYField;
 
-mySPField.factory = function(title, type = "text", ngField){
+mySPField.factory = function(title, type = "text", ngField) {
     type = "SP" + type.toUpperCase() + "Field";
     var spField = new constructorList[type](title, ngField);
     return spField;
@@ -52,7 +52,9 @@ function SPARRAYField(title, ngField) {
 SPARRAYField.prototype = Object.create(SPField.prototype);
 SPARRAYField.prototype.constructor = SPARRAYField;
 SPARRAYField.prototype.getValue = function() {
-    return this.control.val().split(",");
+    var v = this.control.val();
+    v = v ? v.split(",") : [];
+    return v;
 };
 SPARRAYField.prototype.setValue = function(value) {
     this.control.val(value);

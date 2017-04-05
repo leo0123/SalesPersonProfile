@@ -31,7 +31,7 @@
 		</tr>
 		<tr>
 			<td>Email</td>
-			<td><input ng-model="Email" ng-readonly="isReadOnly"/></td>
+			<td><input ng-model="Email" ng-readonly="isReadOnly" style="width:250px;"/></td>
 		</tr>
 		<tr>
 			<td>Employee ID</td>
@@ -44,6 +44,18 @@
 		<tr>
 			<td>SalesP</td>
 			<td><input ng-model="SalesP" ng-readonly="isReadOnly"/></td>
+		</tr>
+		<tr>
+			<td>Old Email</td>
+			<td><textarea ng-model="OldEmail" ng-readonly="notAdmin" style="width:250px;"></textarea></td>
+		</tr>
+		<tr>
+			<td>Old SAP ID</td>
+			<td><textarea ng-model="OldSAPID" ng-readonly="notAdmin" style="width:250px;"></textarea></td>
+		</tr>
+		<tr>
+			<td>Other Account</td>
+			<td><textarea ng-model="OtherAccount" ng-readonly="notAdmin" style="width:250px;"></textarea></td>
 		</tr>
 		<tr>
 			<td>Status</td>

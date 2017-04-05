@@ -283,6 +283,9 @@ function getMetadata4OldAccount(subList) {
     };
 };
 function updateOldAccount() {
+    if (list.length == 0) {
+        return;
+    }
     var subList = [];
     var lastItem;
     var item;

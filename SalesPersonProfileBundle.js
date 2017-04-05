@@ -1170,6 +1170,7 @@ var myPermissionHelper = config.myPermissionHelper;
 var headers = {
     "accept": "application/json;odata=verbose"
 };
+var currentUserUrl = SPServer + "_api/SP.UserProfiles.PeopleManager/GetMyProperties";
 var DomainAccountUrl = dataService + "vSalesPersonAccount4Profile/?$filter=ntaccount ne ''";
 var listName = "SalesPersonProfile";
 var fieldsHelper = myUtility.FieldsHelper;
@@ -1180,14 +1181,29 @@ myApp.controller("myPreCtrl", function($scope) {
 });
 myApp.controller("myPermissionCtrl", myPermissionCtrl);
 myApp.controller("myCtrl", function($scope, $http) {
+    $scope.notAdmin = true;
     $scope.isReadOnly = false;
     $scope.isNew = $("#myFormType").text() == "new" ? true : false;
     var msg = $("#msg");
 
+    getCurrentUserInfo();
+
+    function getCurrentUserInfo() {
+        httpget(currentUserUrl, function mySuccess(response) {
+            var Department = response.data.d.UserProfileProperties.results.find(function getDept(prop) {
+                return prop.Key == "Department";
+            }).Value;
+            if (Department == "IT") {
+                $scope.notAdmin = false;
+            }
+        });
+    };
+
     function init() {
-        fieldsHelper.init($http,$scope,SPPFieldsConfig,SPPList,SPServer);
+        fieldsHelper.init($http, $scope, SPPFieldsConfig, SPPList, SPServer);
         if ($scope.isNew) {
             loadData(DomainAccountUrl, "DomainAccounts");
+            $scope.PortalSalesRole = true;
         } else {
             fieldsHelper.loadFromSP(null, myError);
             $scope.loadSalesOrg(true);
@@ -1195,18 +1211,18 @@ myApp.controller("myCtrl", function($scope, $http) {
         }
     };
 
-    function loadData(url, optionName, mySuccess) {
+    function loadData(url, optionName) {
+        httpget(url, function(response) {
+            $scope[optionName] = response.data.d;
+        });
+    };
+
+    function httpget(url, success, error = myError) {
         $http({
             method: "GET",
             url: url,
             headers: headers
-        }).then(function success(response) {
-            if (mySuccess) {
-                mySuccess(response);
-            } else {
-                $scope[optionName] = response.data.d;
-            }
-        }, myError);
+        }).then(success, error);
     };
 
     function myError(response) {
@@ -1229,7 +1245,7 @@ myApp.controller("myCtrl", function($scope, $http) {
             $scope[key] = tmp[key];
         }
         var aSPUserProfileUrl = SPUserProfile + "'delta\\" + d.ntaccount + "'";
-        loadData(aSPUserProfileUrl, null, loadSPUserProfileSuccess);
+        httpget(aSPUserProfileUrl, loadSPUserProfileSuccess);
     };
 
     function loadSPUserProfileSuccess(response) {
@@ -1241,18 +1257,17 @@ myApp.controller("myCtrl", function($scope, $http) {
         var tmp = {};
         tmp.Name = d.DisplayName;
         tmp.Email = d.Email;
-        tmp.BG = d.UserProfileProperties.results.find(function (prop) {
+        tmp.BG = d.UserProfileProperties.results.find(function(prop) {
             return prop.Key == "Department";
         }).Value;
-        tmp.Company = d.UserProfileProperties.results.find(function (prop) {
+        tmp.Company = d.UserProfileProperties.results.find(function(prop) {
             return prop.Key == "Company";
         }).Value;
-        tmp.Office = d.UserProfileProperties.results.find(function (prop) {
+        tmp.Office = d.UserProfileProperties.results.find(function(prop) {
             return prop.Key == "Office";
         }).Value;
         for (var key in tmp) {
             $scope[key] = tmp[key];
-            //spFields[key].val(tmp[key]);
         }
         if ($scope.DomainAccount != $scope.selectedDomainAccount.ntaccount) {
             $scope.SalesOrg = null;
@@ -1279,7 +1294,7 @@ myApp.controller("myCtrl", function($scope, $http) {
         }
         lastCompanyToken = new Date().getTime();
         var SalesOrgUrl = dataService + "vCompanyOrg4Profile/?$filter=Company eq '" + $scope.Company + "'&t=" + lastCompanyToken;
-        loadData(SalesOrgUrl, null, loadSalesOrgSuccess);
+        httpget(SalesOrgUrl, loadSalesOrgSuccess);
     };
 
     function loadSalesOrgSuccess(response) {
@@ -1335,7 +1350,7 @@ myApp.controller("myCtrl", function($scope, $http) {
         }
         lastSalesOrgToken = new Date().getTime();
         var DivisionUrl = dataService + "vSalesOrgDivision4Profile/?$filter=" + filter + "&&$orderby=Division&t=" + lastSalesOrgToken;
-        loadData(DivisionUrl, null, loadDivisionSuccess);
+        httpget(DivisionUrl, loadDivisionSuccess);
     }
 
     function loadDivisionSuccess(response) {
@@ -1359,7 +1374,6 @@ myApp.controller("myCtrl", function($scope, $http) {
 
     init();
     $("#btSave").click(function() {
-        //$("[value='Save']:first").click();
         save();
     });
     $("#btCancel").click(function() {
@@ -1377,15 +1391,8 @@ myApp.controller("myCtrl", function($scope, $http) {
     };
     PreSaveAction = function() {
         //TODO check exist
-        //saveToSpFields("all");
-        //return false;
         save();
         return false;
-        /*if ($scope.isNew && $scope.DomainAccount != $scope.selectedDomainAccount.ntaccount) {
-            msg.text("change Domain Account incompleted");
-            return false;
-        }
-        return true;*/
     };
     $scope.openPermissionEditor = function() {
         if (!$scope.myPermissionFormUrl) {
@@ -1527,7 +1534,8 @@ myUtility.FieldsHelper.init = function(_$http, _$scope, _fieldsConfig, _SPList, 
         $http: _$http,
         $scope: _$scope,
         fieldsConfig: _fieldsConfig,
-        SPList: _SPList
+        SPList: _SPList,
+        SPUrl: _SPList
     };
     initFields(_fieldsConfig);
     getFormDigestService(SPServer);
@@ -1537,15 +1545,15 @@ myUtility.FieldsHelper.loadFromSP = function(success, error) {
         console.log("FieldsHelper need init first");
     }
     var id = myUtility.getParam("ID");
-    helper.itemUrl = helper.SPList + "(" + id + ")";
-    httpget(helper.itemUrl, function(response) {
+    helper.SPUrl = helper.SPList + "(" + id + ")";
+    httpget(helper.SPUrl, function(response) {
         var d = response.data.d;
         var fieldsConfig = helper.fieldsConfig;
         var $scope = helper.$scope;
         for (var key in fieldsConfig) {
             var obj = fieldsConfig[key];
             var value = d[obj.SPFieldName];
-            if (value || value === false) {
+            if (value != undefined && value != null) {
                 if (obj.ngFieldType === "text") {
                     $scope[obj.ngFieldName] = value;
                 } else if (obj.ngFieldType === "array") {
@@ -1568,9 +1576,14 @@ myUtility.FieldsHelper.saveToSP = function(listName, isMerge, success, error) {
             type: "SP.Data." + listName + "ListItem"
         },
     };
+    var fieldsConfig = helper.fieldsConfig;
+    var $scope = helper.$scope;
     for (var key in fieldsConfig) {
         var obj = fieldsConfig[key];
-        metadata[obj.SPFieldName] = $scope[obj.ngFieldName].toString();
+        var value = $scope[obj.ngFieldName];
+        if (value != undefined && value != null) {
+            metadata[obj.SPFieldName] = value.toString();
+        }
     }
     httppost(metadata, isMerge, success, error);
 };
@@ -1578,7 +1591,7 @@ myUtility.FieldsHelper.saveToSP = function(listName, isMerge, success, error) {
 function httppost(metadata, isMerge, success, error) {
     helper.$http({
         method: "POST",
-        url: helper.itemUrl,
+        url: helper.SPUrl,
         data: JSON.stringify(metadata),
         headers: getHeaders4Post(metadata, isMerge),
         dataType: 'json',
@@ -1586,6 +1599,7 @@ function httppost(metadata, isMerge, success, error) {
 };
 
 function getHeaders4Post(metadata, isMerge) {
+    var digest = helper.digest;
     if (isMerge) {
         return {
             "X-HTTP-Method": "MERGE",

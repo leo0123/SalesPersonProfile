@@ -77,7 +77,8 @@ myUtility.FieldsHelper.init = function(_$http, _$scope, _fieldsConfig, _SPList, 
         $http: _$http,
         $scope: _$scope,
         fieldsConfig: _fieldsConfig,
-        SPList: _SPList
+        SPList: _SPList,
+        SPUrl: _SPList
     };
     initFields(_fieldsConfig);
     getFormDigestService(SPServer);
@@ -87,15 +88,15 @@ myUtility.FieldsHelper.loadFromSP = function(success, error) {
         console.log("FieldsHelper need init first");
     }
     var id = myUtility.getParam("ID");
-    helper.itemUrl = helper.SPList + "(" + id + ")";
-    httpget(helper.itemUrl, function(response) {
+    helper.SPUrl = helper.SPList + "(" + id + ")";
+    httpget(helper.SPUrl, function(response) {
         var d = response.data.d;
         var fieldsConfig = helper.fieldsConfig;
         var $scope = helper.$scope;
         for (var key in fieldsConfig) {
             var obj = fieldsConfig[key];
             var value = d[obj.SPFieldName];
-            if (value || value === false) {
+            if (value != undefined && value != null) {
                 if (obj.ngFieldType === "text") {
                     $scope[obj.ngFieldName] = value;
                 } else if (obj.ngFieldType === "array") {
@@ -118,9 +119,14 @@ myUtility.FieldsHelper.saveToSP = function(listName, isMerge, success, error) {
             type: "SP.Data." + listName + "ListItem"
         },
     };
+    var fieldsConfig = helper.fieldsConfig;
+    var $scope = helper.$scope;
     for (var key in fieldsConfig) {
         var obj = fieldsConfig[key];
-        metadata[obj.SPFieldName] = $scope[obj.ngFieldName].toString();
+        var value = $scope[obj.ngFieldName];
+        if (value != undefined && value != null) {
+            metadata[obj.SPFieldName] = value.toString();
+        }
     }
     httppost(metadata, isMerge, success, error);
 };
@@ -128,7 +134,7 @@ myUtility.FieldsHelper.saveToSP = function(listName, isMerge, success, error) {
 function httppost(metadata, isMerge, success, error) {
     helper.$http({
         method: "POST",
-        url: helper.itemUrl,
+        url: helper.SPUrl,
         data: JSON.stringify(metadata),
         headers: getHeaders4Post(metadata, isMerge),
         dataType: 'json',
@@ -136,6 +142,7 @@ function httppost(metadata, isMerge, success, error) {
 };
 
 function getHeaders4Post(metadata, isMerge) {
+    var digest = helper.digest;
     if (isMerge) {
         return {
             "X-HTTP-Method": "MERGE",

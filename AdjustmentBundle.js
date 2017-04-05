@@ -205,16 +205,22 @@ myApp.controller("myCtrl", function($scope, $http) {
             alert(msg.text());
             return false;
         }
-        if ($scope.NewEndCustomer && ($scope.EndCustomer.toUpperCase() != "OTHERS" || $scope.EndCustomer.toUpperCase() != "DISTRIBUTOR OTHERS")) {
-            msg.text("Only allow to change End Customer when End Customer is OTHERS");
-            alert(msg.text());
-            return false;
+        if ($scope.NewEndCustomer) {
+            for (var i in $scope.EndCustomer) {
+                if ($scope.EndCustomer[i].toUpperCase() != "OTHERS" &&
+                    $scope.EndCustomer[i].toUpperCase() != "DISTRIBUTOR OTHERS" &&
+                    $scope.EndCustomer[i].toUpperCase() != "UNKNOWN") {
+                    msg.text("Only allow to change End Customer when End Customer is OTHERS or UNKNOWN");
+                    alert(msg.text());
+                    return false;
+                }
+            }
         }
         return true;
     }
 
     PreSaveAction = function() {
-        SPHelper.saveToSpFields($scope);
+        SPHelper.copyToSpFields($scope);
         if (!checkStatus()) {
             return false;
         }
@@ -347,7 +353,7 @@ constructorList.SPTEXTField = SPTEXTField;
 constructorList.SPCHECKField = SPCHECKField;
 constructorList.SPARRAYField = SPARRAYField;
 
-mySPField.factory = function(title, type = "text", ngField){
+mySPField.factory = function(title, type = "text", ngField) {
     type = "SP" + type.toUpperCase() + "Field";
     var spField = new constructorList[type](title, ngField);
     return spField;
@@ -394,7 +400,9 @@ function SPARRAYField(title, ngField) {
 SPARRAYField.prototype = Object.create(SPField.prototype);
 SPARRAYField.prototype.constructor = SPARRAYField;
 SPARRAYField.prototype.getValue = function() {
-    return this.control.val().split(",");
+    var v = this.control.val();
+    v = v ? v.split(",") : [];
+    return v;
 };
 SPARRAYField.prototype.setValue = function(value) {
     this.control.val(value);
@@ -403,7 +411,6 @@ SPARRAYField.prototype.setValue = function(value) {
 module.exports = mySPField;
 
 },{}],5:[function(require,module,exports){
-
 var mySPField = require("./SPField.js")
 
 var myUtility = {};
@@ -432,6 +439,7 @@ myUtility.getParam = function(paramName) {
 
 myUtility.SPHelper = {};
 var SPFields = {};
+
 function init(SPFieldsConfig, $) {
     for (var key in SPFieldsConfig) {
         var SPFieldConfig = SPFieldsConfig[key];
@@ -455,6 +463,135 @@ myUtility.SPHelper.copyToSpFields = function($scope) {
         var SPField = SPFields[key];
         SPField.setValue($scope[SPField.ngField]);
     }
+};
+
+var headers = {
+    "accept": "application/json;odata=verbose"
+};
+myUtility.FieldsHelper = {};
+
+function initFields(fieldsConfig) {
+    for (var key in fieldsConfig) {
+        var obj = fieldsConfig[key];
+        if (!obj.SPFieldName) {
+            obj.SPFieldName = key;
+        }
+        if (!obj.ngFieldName) {
+            obj.ngFieldName = key;
+        }
+        if (!obj.ngFieldType) {
+            obj.ngFieldType = "text";
+        }
+    }
+};
+var helper;
+myUtility.FieldsHelper.init = function(_$http, _$scope, _fieldsConfig, _SPList, SPServer) {
+    helper = {
+        $http: _$http,
+        $scope: _$scope,
+        fieldsConfig: _fieldsConfig,
+        SPList: _SPList,
+        SPUrl: _SPList
+    };
+    initFields(_fieldsConfig);
+    getFormDigestService(SPServer);
+};
+myUtility.FieldsHelper.loadFromSP = function(success, error) {
+    if (!helper) {
+        console.log("FieldsHelper need init first");
+    }
+    var id = myUtility.getParam("ID");
+    helper.SPUrl = helper.SPList + "(" + id + ")";
+    httpget(helper.SPUrl, function(response) {
+        var d = response.data.d;
+        var fieldsConfig = helper.fieldsConfig;
+        var $scope = helper.$scope;
+        for (var key in fieldsConfig) {
+            var obj = fieldsConfig[key];
+            var value = d[obj.SPFieldName];
+            if (value != undefined && value != null) {
+                if (obj.ngFieldType === "text") {
+                    $scope[obj.ngFieldName] = value;
+                } else if (obj.ngFieldType === "array") {
+                    $scope[obj.ngFieldName] = value.split(",");
+                }
+            }
+        }
+        if (success) {
+            success();
+        }
+    }, error);
+};
+myUtility.FieldsHelper.saveToSP = function(listName, isMerge, success, error) {
+    if (!helper) {
+        console.log("FieldsHelper need init first");
+    }
+    var metadata;
+    metadata = {
+        __metadata: {
+            type: "SP.Data." + listName + "ListItem"
+        },
+    };
+    var fieldsConfig = helper.fieldsConfig;
+    var $scope = helper.$scope;
+    for (var key in fieldsConfig) {
+        var obj = fieldsConfig[key];
+        var value = $scope[obj.ngFieldName];
+        if (value != undefined && value != null) {
+            metadata[obj.SPFieldName] = value.toString();
+        }
+    }
+    httppost(metadata, isMerge, success, error);
+};
+
+function httppost(metadata, isMerge, success, error) {
+    helper.$http({
+        method: "POST",
+        url: helper.SPUrl,
+        data: JSON.stringify(metadata),
+        headers: getHeaders4Post(metadata, isMerge),
+        dataType: 'json',
+    }).then(success, error);
+};
+
+function getHeaders4Post(metadata, isMerge) {
+    var digest = helper.digest;
+    if (isMerge) {
+        return {
+            "X-HTTP-Method": "MERGE",
+            "IF-MATCH": "*",
+            "accept": "application/json;odata=verbose",
+            "content-type": "application/json;odata=verbose",
+            "content-length": metadata.length,
+            "X-RequestDigest": digest
+        };
+    } else {
+        return {
+            "accept": "application/json;odata=verbose",
+            "content-type": "application/json;odata=verbose",
+            "content-length": metadata.length,
+            "X-RequestDigest": digest
+        };
+    }
+};
+
+function getFormDigestService(SPServer) {
+    helper.$http({
+        url: SPServer + "_api/contextinfo",
+        method: 'POST',
+        data: '',
+        headers: headers,
+    }).then(function(response) {
+        helper.digest = response.data.d.GetContextWebInformation.FormDigestValue;
+    });
+};
+
+function httpget(url, success, error) {
+    helper.$http({
+        method: "GET",
+        url: url,
+        headers: headers
+    }).then(success, error);
 };
 
 module.exports = myUtility;

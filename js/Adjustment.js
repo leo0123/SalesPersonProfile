@@ -197,16 +197,22 @@ myApp.controller("myCtrl", function($scope, $http) {
             alert(msg.text());
             return false;
         }
-        if ($scope.NewEndCustomer && ($scope.EndCustomer.toUpperCase() != "OTHERS" || $scope.EndCustomer.toUpperCase() != "DISTRIBUTOR OTHERS")) {
-            msg.text("Only allow to change End Customer when End Customer is OTHERS");
-            alert(msg.text());
-            return false;
+        if ($scope.NewEndCustomer) {
+            for (var i in $scope.EndCustomer) {
+                if ($scope.EndCustomer[i].toUpperCase() != "OTHERS" &&
+                    $scope.EndCustomer[i].toUpperCase() != "DISTRIBUTOR OTHERS" &&
+                    $scope.EndCustomer[i].toUpperCase() != "UNKNOWN") {
+                    msg.text("Only allow to change End Customer when End Customer is OTHERS or UNKNOWN");
+                    alert(msg.text());
+                    return false;
+                }
+            }
         }
         return true;
     }
 
     PreSaveAction = function() {
-        SPHelper.saveToSpFields($scope);
+        SPHelper.copyToSpFields($scope);
         if (!checkStatus()) {
             return false;
         }
