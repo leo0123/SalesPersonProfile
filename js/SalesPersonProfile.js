@@ -2,28 +2,27 @@ var angular = require("angular");
 var $ = require("jquery");
 require("angular-material");
 var myPermissionCtrl = require("./MyPermissionCtrl.js");
-var SPPFieldsConfig = require("./SalesPersonProfileFields.js")
-var myUtility = require("./Utility.js")
+var SPPFieldsConfig = require("./SalesPersonProfileFields.js");
+var myUtility = require("./Utility.js");
 
 var config = mySalesPersonProfileConfig;
-var myFormUrl = config.myForm;
-var myPermissionFormUrl = config.myPermissionForm;
+var myFormUrl = config.myFormUrl;
+var myPermissionFormUrl = config.myPermissionFormUrl;
 
-var SPServer = config.SPServer;
-var SPUserProfile = config.SPUserProfile;
-var SPPList = config.SalesPersonProfileList;
+var SPServerUrl = config.SPServerUrl;
+var SPUserProfileUrl = config.SPUserProfileUrl;
+var SPPListUrl = config.SalesPersonProfileListUrl;
 
-var dataService = config.dataService;
+var dataServiceUrl = config.dataServiceUrl;
 
 var myPermissionHelper = config.myPermissionHelper;
 
 var headers = {
     "accept": "application/json;odata=verbose"
 };
-var currentUserUrl = SPServer + "_api/SP.UserProfiles.PeopleManager/GetMyProperties";
-var DomainAccountUrl = dataService + "vSalesPersonAccount4Profile/?$filter=ntaccount ne ''";
+var currentUserUrl = SPServerUrl + "_api/SP.UserProfiles.PeopleManager/GetMyProperties";
+var DomainAccountUrl = dataServiceUrl + "vSalesPersonAccount4Profile/?$filter=ntaccount ne ''";
 var listName = "SalesPersonProfile";
-var fieldsHelper = myUtility.FieldsHelper;
 
 var myApp = angular.module('myApp', ['ngMaterial']);
 myApp.controller("myPreCtrl", function($scope) {
@@ -35,12 +34,20 @@ myApp.controller("myCtrl", function($scope, $http) {
     $scope.isReadOnly = false;
     $scope.isNew = $("#myFormType").text() == "new" ? true : false;
     var msg = $("#msg");
+    var HttpGet = myUtility.buildHttpGet($http, myError);
+    var SPHelper = myUtility.buildSPHelper({
+        $scope: $scope,
+        fieldsConfig: SPPFieldsConfig,
+        SPList: SPPListUrl,
+        SPServer: SPServerUrl,
+        $http: $http,
+    });
 
     getCurrentUserInfo();
 
     function getCurrentUserInfo() {
-        httpget(currentUserUrl, function mySuccess(response) {
-            var Department = response.data.d.UserProfileProperties.results.find(function getDept(prop) {
+        HttpGet(currentUserUrl, function(result) {
+            var Department = result.d.UserProfileProperties.results.find(function getDept(prop) {
                 return prop.Key == "Department";
             }).Value;
             if (Department == "IT") {
@@ -50,29 +57,20 @@ myApp.controller("myCtrl", function($scope, $http) {
     };
 
     function init() {
-        fieldsHelper.init($http, $scope, SPPFieldsConfig, SPPList, SPServer);
         if ($scope.isNew) {
             loadData(DomainAccountUrl, "DomainAccounts");
             $scope.PortalSalesRole = true;
         } else {
-            fieldsHelper.loadFromSP(null, myError);
+            SPHelper.loadFromSP(null, myError);
             $scope.loadSalesOrg(true);
             $scope.loadDivision(true);
         }
     };
 
     function loadData(url, optionName) {
-        httpget(url, function(response) {
-            $scope[optionName] = response.data.d;
+        HttpGet(url, function(result) {
+            $scope[optionName] = result.d;
         });
-    };
-
-    function httpget(url, success, error = myError) {
-        $http({
-            method: "GET",
-            url: url,
-            headers: headers
-        }).then(success, error);
     };
 
     function myError(response) {
@@ -94,12 +92,12 @@ myApp.controller("myCtrl", function($scope, $http) {
         for (var key in tmp) {
             $scope[key] = tmp[key];
         }
-        var aSPUserProfileUrl = SPUserProfile + "'delta\\" + d.ntaccount + "'";
-        httpget(aSPUserProfileUrl, loadSPUserProfileSuccess);
+        var aSPUserProfileUrl = SPUserProfileUrl + "'delta\\" + d.ntaccount + "'";
+        HttpGet(aSPUserProfileUrl, loadSPUserProfileSuccess);
     };
 
-    function loadSPUserProfileSuccess(response) {
-        var d = response.data.d;
+    function loadSPUserProfileSuccess(result) {
+        var d = result.d;
         if (!d.DisplayName) {
             msg.text("can't get user information from sharepoint");
             return;
@@ -143,15 +141,15 @@ myApp.controller("myCtrl", function($scope, $http) {
             }
         }
         lastCompanyToken = new Date().getTime();
-        var SalesOrgUrl = dataService + "vCompanyOrg4Profile/?$filter=Company eq '" + $scope.Company + "'&t=" + lastCompanyToken;
-        httpget(SalesOrgUrl, loadSalesOrgSuccess);
+        var SalesOrgUrl = dataServiceUrl + "vCompanyOrg4Profile/?$filter=Company eq '" + $scope.Company + "'&t=" + lastCompanyToken;
+        HttpGet(SalesOrgUrl, loadSalesOrgSuccess);
     };
 
-    function loadSalesOrgSuccess(response) {
-        if (!response.config.url.endsWith("&t=" + lastCompanyToken)) {
+    function loadSalesOrgSuccess(result, url) {
+        if (!url.endsWith("&t=" + lastCompanyToken)) {
             return;
         }
-        $scope.SalesOrgs = response.data.d;
+        $scope.SalesOrgs = result.d;
         lastCompany = $scope.Company;
     };
 
@@ -199,15 +197,15 @@ myApp.controller("myCtrl", function($scope, $http) {
             }
         }
         lastSalesOrgToken = new Date().getTime();
-        var DivisionUrl = dataService + "vSalesOrgDivision4Profile/?$filter=" + filter + "&&$orderby=Division&t=" + lastSalesOrgToken;
-        httpget(DivisionUrl, loadDivisionSuccess);
+        var DivisionUrl = dataServiceUrl + "vSalesOrgDivision4Profile/?$filter=" + filter + "&&$orderby=Division&t=" + lastSalesOrgToken;
+        HttpGet(DivisionUrl, loadDivisionSuccess);
     }
 
-    function loadDivisionSuccess(response) {
-        if (!response.config.url.endsWith("&t=" + lastSalesOrgToken)) {
+    function loadDivisionSuccess(result, url) {
+        if (!url.endsWith("&t=" + lastSalesOrgToken)) {
             return;
         }
-        $scope.Divisions = distinctDivisions(response.data.d);
+        $scope.Divisions = distinctDivisions(result.d);
         lastSalesOrg = $scope.SalesOrg.toString();
     };
 
@@ -224,24 +222,30 @@ myApp.controller("myCtrl", function($scope, $http) {
 
     init();
     $("#btSave").click(function() {
-        save();
+        checkAndSaveToSP();
     });
     $("#btCancel").click(function() {
-        $("[value='Cancel']:first").click();
+        //$("[value='Cancel']:first").click();
+        backToSPListPage();
     });
 
-    function save() {
+    function checkAndSaveToSP() {
         if ($scope.isNew && $scope.DomainAccount != $scope.selectedDomainAccount.ntaccount) {
             msg.text("change Domain Account incompleted");
             return;
         }
-        fieldsHelper.saveToSP(listName, !$scope.isNew, function() {
+        SPHelper.saveToSP(listName, !$scope.isNew, function() {
             msg.text("saved");
+            backToSPListPage();
         });
+    };
+
+    function backToSPListPage() {
+        STSNavigate(myUtility.formatSPSourceUrl(myUtility.getParam("Source")));
     };
     PreSaveAction = function() {
         //TODO check exist
-        save();
+        checkAndSaveToSP();
         return false;
     };
     $scope.openPermissionEditor = function() {

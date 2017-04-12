@@ -1,52 +1,27 @@
-var SPFieldsConfig = {
+var AdjustmentFieldsConfig = {
     BG: {
-        title: "BG Required Field",
+        //SPFieldName : "BG",
+        //ngFieldName : "BG",
+        //ngFieldType : "text",
     },
-    Company: {
-        title: "Company Required Field",
-    },
-    SalesPerson: {
-        title: "Sales Person",
-    },
+    Company: {},
+    SalesPerson: {},
     EndCustomer: {
-        title: "End Customer",
-        type:"array",
+        ngFieldType: "array",
     },
     Material: {
-        title: "Material",
-        type:"array",
+        ngFieldType: "array",
     },
     ProfitCenter: {
-        title: "Profit Center",
-        type:"array",
+        ngFieldType: "array",
     },
-    Year: {
-        title: "Year",
-    },
-    NewSalesPerson: {
-        title: "New Sales Person",
-    },
-    NewEndCustomer: {
-        title: "New End Customer",
-    },
-    NewMaterial: {
-        title: "New Material",
-    },
-    SoldToCode: {
-        title: "Sold To Code",
-    },
-    BatchNumber: {
-        title: "Batch Number",
-    },
-    SalesType: {
-        title: "Sales Type",
-    },
-    YearMonth: {
-        title: "Effective Year Month Required Field",
-    },
-    ApprovalStatus: {
-        title: "Approval Status",
-    },
+    NewSalesPerson: {},
+    NewEndCustomer: {},
+    NewMaterial: {},
+    EffectiveYearMonth: {},
+    BatchNumber: {},
+    SalesType: {},
+    ApprovalStatus: {},
 };
 
-module.exports = SPFieldsConfig;
+module.exports = AdjustmentFieldsConfig;

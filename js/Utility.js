@@ -1,16 +1,15 @@
-var mySPField = require("./SPField.js")
-
 var myUtility = {};
 
 myUtility.getParam = function(paramName) {
     var url = window.location.href;
     var startIndex = url.indexOf("?");
-    paramName = paramName + "=";
-    var i = url.indexOf(paramName, startIndex);
+    url = "&" + url.substring(startIndex + 1);
+    paramName = "&" + paramName + "=";
+    var i = url.indexOf(paramName, 0);
     if (i < 0) {
         return "";
     }
-    var j = url.indexOf("&", i);
+    var j = url.indexOf("&", i + 1);
     i = i + paramName.length;
     var param;
     if (j > 0) {
@@ -23,39 +22,51 @@ myUtility.getParam = function(paramName) {
     };
     return param;
 };
-
-myUtility.SPHelper = {};
-var SPFields = {};
-
-function init(SPFieldsConfig, $) {
-    for (var key in SPFieldsConfig) {
-        var SPFieldConfig = SPFieldsConfig[key];
-        SPFields[key] = mySPField.factory(SPFieldConfig.title, SPFieldConfig.type);
-    }
-    for (var key in SPFields) {
-        var SPField = SPFields[key];
-        SPField.initControl($);
-        SPField.ngField = SPField.ngField ? SPField.ngField : key;
-    }
-};
-myUtility.SPHelper.loadFromSpFields = function(SPFieldsConfig, $, $scope) {
-    init(SPFieldsConfig, $);
-    for (var key in SPFields) {
-        var SPField = SPFields[key];
-        $scope[SPField.ngField] = SPField.getValue();
-    }
-};
-myUtility.SPHelper.copyToSpFields = function($scope) {
-    for (var key in SPFields) {
-        var SPField = SPFields[key];
-        SPField.setValue($scope[SPField.ngField]);
-    }
+myUtility.formatSPSourceUrl = function(url) {
+    url = url.replace(/%3A/g, ":");
+    url = url.replace(/%2F/g, "/");
+    url = url.replace(/%2E/g, ".");
+    url = url.replace(/%2D/g, "-");
+    url = url.replace(/%23/g, "#");
+    url = url.replace(/%3F/g, "?");
+    url = url.replace(/%3D/g, "=");
+    url = url.replace(/%26/g, "&");
+    url = url.replace(/%7B/g, "{");
+    url = url.replace(/%7D/g, "}");
+    return url;
 };
 
 var headers = {
-    "accept": "application/json;odata=verbose"
+    "accept": "application/json;odata=verbose",
 };
-myUtility.FieldsHelper = {};
+
+var ngHttp;
+
+myUtility.buildSPHelper = function(obj) {
+    ngHttp = obj.$http;
+    initFields(obj.fieldsConfig);
+    var id = myUtility.getParam("ID");
+    return {
+        loadFromSP: function(success, error) {
+            HttpGet(obj.SPList + "(" + id + ")", function(result) {
+                copyToScope(obj.fieldsConfig, result.d, obj.$scope);
+                if (success) {
+                    success();
+                }
+            }, error);
+        },
+        saveToSP: function(listName, isMerge, success, error) {
+            SPPost({
+                url: isMerge ? obj.SPList + "(" + id + ")" : obj.SPList,
+                metadata: createMetadata(listName, obj.fieldsConfig, obj.$scope),
+                isMerge: isMerge,
+                success: success,
+                error: error,
+                SPServer: obj.SPServer,
+            });
+        },
+    };
+};
 
 function initFields(fieldsConfig) {
     for (var key in fieldsConfig) {
@@ -71,56 +82,13 @@ function initFields(fieldsConfig) {
         }
     }
 };
-var helper;
-myUtility.FieldsHelper.init = function(_$http, _$scope, _fieldsConfig, _SPList, SPServer) {
-    helper = {
-        $http: _$http,
-        $scope: _$scope,
-        fieldsConfig: _fieldsConfig,
-        SPList: _SPList,
-        SPUrl: _SPList
-    };
-    initFields(_fieldsConfig);
-    getFormDigestService(SPServer);
-};
-myUtility.FieldsHelper.loadFromSP = function(success, error) {
-    if (!helper) {
-        console.log("FieldsHelper need init first");
-    }
-    var id = myUtility.getParam("ID");
-    helper.SPUrl = helper.SPList + "(" + id + ")";
-    httpget(helper.SPUrl, function(response) {
-        var d = response.data.d;
-        var fieldsConfig = helper.fieldsConfig;
-        var $scope = helper.$scope;
-        for (var key in fieldsConfig) {
-            var obj = fieldsConfig[key];
-            var value = d[obj.SPFieldName];
-            if (value != undefined && value != null) {
-                if (obj.ngFieldType === "text") {
-                    $scope[obj.ngFieldName] = value;
-                } else if (obj.ngFieldType === "array") {
-                    $scope[obj.ngFieldName] = value.split(",");
-                }
-            }
-        }
-        if (success) {
-            success();
-        }
-    }, error);
-};
-myUtility.FieldsHelper.saveToSP = function(listName, isMerge, success, error) {
-    if (!helper) {
-        console.log("FieldsHelper need init first");
-    }
-    var metadata;
-    metadata = {
+
+function createMetadata(listName, fieldsConfig, $scope) {
+    var metadata = {
         __metadata: {
             type: "SP.Data." + listName + "ListItem"
         },
     };
-    var fieldsConfig = helper.fieldsConfig;
-    var $scope = helper.$scope;
     for (var key in fieldsConfig) {
         var obj = fieldsConfig[key];
         var value = $scope[obj.ngFieldName];
@@ -128,57 +96,94 @@ myUtility.FieldsHelper.saveToSP = function(listName, isMerge, success, error) {
             metadata[obj.SPFieldName] = value.toString();
         }
     }
-    httppost(metadata, isMerge, success, error);
+    return metadata;
 };
 
-function httppost(metadata, isMerge, success, error) {
-    helper.$http({
-        method: "POST",
-        url: helper.SPUrl,
-        data: JSON.stringify(metadata),
-        headers: getHeaders4Post(metadata, isMerge),
-        dataType: 'json',
-    }).then(success, error);
-};
-
-function getHeaders4Post(metadata, isMerge) {
-    var digest = helper.digest;
-    if (isMerge) {
-        return {
-            "X-HTTP-Method": "MERGE",
-            "IF-MATCH": "*",
-            "accept": "application/json;odata=verbose",
-            "content-type": "application/json;odata=verbose",
-            "content-length": metadata.length,
-            "X-RequestDigest": digest
-        };
-    } else {
-        return {
-            "accept": "application/json;odata=verbose",
-            "content-type": "application/json;odata=verbose",
-            "content-length": metadata.length,
-            "X-RequestDigest": digest
-        };
+function copyToScope(fieldsConfig, d, $scope) {
+    for (var key in fieldsConfig) {
+        var obj = fieldsConfig[key];
+        var value = d[obj.SPFieldName];
+        if (value != undefined && value != null) {
+            if (obj.ngFieldType === "text") {
+                $scope[obj.ngFieldName] = value;
+            } else if (obj.ngFieldType === "array") {
+                $scope[obj.ngFieldName] = value.split(",");
+            }
+        }
     }
 };
 
-function getFormDigestService(SPServer) {
-    helper.$http({
+function SPPost(obj) {
+    getFormDigestService(obj.SPServer, function(digest) {
+        ngHttp({
+            url: obj.url,
+            method: "POST",
+            data: JSON.stringify(obj.metadata),
+            headers: getSPHeaders4Post(obj.metadata.length, obj.isMerge, digest),
+        }).then(function(response) {
+            if (obj.success) {
+                obj.success(response.data);
+            }
+        }, obj.error);
+    })
+};
+
+function getSPHeaders4Post(ContentLength, isMerge, digest) {
+    var SPHeaders = {
+        "accept": "application/json;odata=verbose",
+        "content-type": "application/json;odata=verbose",
+        "content-length": ContentLength,
+        "X-RequestDigest": digest,
+    };
+    if (isMerge) {
+        SPHeaders["X-HTTP-Method"] = "MERGE";
+        SPHeaders["IF-MATCH"] = "*";
+    }
+    return SPHeaders;
+};
+
+function getFormDigestService(SPServer, success) {
+    ngHttp({
         url: SPServer + "_api/contextinfo",
-        method: 'POST',
+        method: "POST",
         data: '',
         headers: headers,
     }).then(function(response) {
-        helper.digest = response.data.d.GetContextWebInformation.FormDigestValue;
+        var result = response.data;
+        digest = result.d.GetContextWebInformation.FormDigestValue;
+        if (success) {
+            success(digest);
+        }
     });
 };
 
-function httpget(url, success, error) {
-    helper.$http({
-        method: "GET",
+//jquery sometimes not refresh angular
+/*function AjaxGet(url, success, error) {
+    $.ajax({
         url: url,
-        headers: headers
-    }).then(success, error);
+        type: "GET",
+        headers: headers,
+        success: success,
+        error: error,
+    });
+};*/
+function HttpGet(url, success, error = defaultError) {
+    ngHttp({
+        url: url,
+        method: "GET",
+        headers: headers,
+    }).then(function(response) {
+        if (success) {
+            success(response.data, response.config.url);
+        }
+    }, error);
+};
+
+myUtility.buildHttpGet = function($Http, defaultError) {
+    ngHttp = $Http;
+    return function(url, success, error = defaultError) {
+        HttpGet(url, success, error);
+    };
 };
 
 module.exports = myUtility;

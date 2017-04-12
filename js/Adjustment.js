@@ -2,18 +2,18 @@ var angular = require("angular");
 var $ = require("jquery");
 require("angular-material");
 var myUtility = require("./Utility.js");
-var SPFieldsConfig = require("./AdjustmentFields.js")
+var AdjustmentFieldsConfig = require("./AdjustmentFields.js");
 
-var SPHelper = myUtility.SPHelper;
 var myFormUrl = myAdjustmentConfig.myFormUrl;
-var listServer = myAdjustmentConfig.listServer;
-var dataService = myAdjustmentConfig.dataService;
-var vSalesCustomerUrl = dataService + "vSalesCustomer";
-var currentUserUrl = listServer + "_api/SP.UserProfiles.PeopleManager/GetMyProperties";
-var profileListUrl = dataService + "vSalesPersonProfile";
-var queryActualBudgetUrl = dataService + "getActualBudget";
-var queryNextBatchNum = dataService + "getNextAdjustBatchNum";
-var headers = myAdjustmentConfig.headers;
+var SPServerUrl = myAdjustmentConfig.SPServerUrl;
+var dataServiceUrl = myAdjustmentConfig.dataServiceUrl;
+var vSalesCustomerUrl = dataServiceUrl + "vSalesCustomer";
+var currentUserUrl = SPServerUrl + "_api/SP.UserProfiles.PeopleManager/GetMyProperties";
+var profileListUrl = dataServiceUrl + "vSalesPersonProfile";
+var queryActualBudgetUrl = dataServiceUrl + "getActualBudget";
+var queryNextBatchNumUrl = dataServiceUrl + "getNextAdjustBatchNum";
+var AdjustmentListUrl = myAdjustmentConfig.AdjustmentListUrl;
+var listName = "AdjustmentRecord";
 
 var myApp = angular.module('myApp', ['ngMaterial']);
 myApp.controller("myPreCtrl", function($scope) {
@@ -21,18 +21,26 @@ myApp.controller("myPreCtrl", function($scope) {
 });
 myApp.controller("myCtrl", function($scope, $http) {
     $scope.notAdmin = true;
-    const isNew = $("#myFormType").text() == "new" ? true : false;
+    $scope.isNew = $("#myFormType").text() == "new" ? true : false;
     var msg = $("#msg");
     var currentUser = {};
+    var HttpGet = myUtility.buildHttpGet($http, myError);
+    var SPHelper = myUtility.buildSPHelper({
+        $scope: $scope,
+        fieldsConfig: AdjustmentFieldsConfig,
+        SPList: AdjustmentListUrl,
+        SPServer: SPServerUrl,
+        $http: $http,
+    });
 
     getCurrentUserInfo();
 
     function getCurrentUserInfo() {
-        httpget(currentUserUrl, function mySuccess(response) {
-            currentUser.Department = response.data.d.UserProfileProperties.results.find(function getDept(prop) {
+        HttpGet(currentUserUrl, function(result) {
+            currentUser.Department = result.d.UserProfileProperties.results.find(function getDept(prop) {
                 return prop.Key == "Department";
             }).Value;
-            currentUser.Company = response.data.d.UserProfileProperties.results.find(function getCom(prop) {
+            currentUser.Company = result.d.UserProfileProperties.results.find(function getCom(prop) {
                 return prop.Key == "Company";
             }).Value;
             if (currentUser.Department == "IT") {
@@ -43,8 +51,7 @@ myApp.controller("myCtrl", function($scope, $http) {
     };
 
     function loadFormData() {
-        SPHelper.loadFromSpFields(SPFieldsConfig, $, $scope);
-        if (isNew) {
+        if ($scope.isNew) {
             if ($scope.notAdmin) {
                 if (currentUser.Company == "ALI") {
                     currentUser.Company = "DPC";
@@ -60,24 +67,27 @@ myApp.controller("myCtrl", function($scope, $http) {
             $scope.Year = "2016";
             $scope.Month = "01";
             $scope.YearMonthChanged();
-            httpget(queryNextBatchNum, function mySuccess(response) {
-                $scope.BatchNumber = response.data.d.getNextAdjustBatchNum;
+            HttpGet(queryNextBatchNumUrl, function(result) {
+                $scope.BatchNumber = result.d.getNextAdjustBatchNum;
             });
         } else {
-            $scope.loadOption();
-            $scope.Month = $scope.YearMonth.substring(4, 6);
-            if ($scope.ApprovalStatus == "Approved" || $scope.ApprovalStatus == "Pending") {
-                msg.text("The status is " + $scope.ApprovalStatus + ", can't be edited.");
-                if ($scope.notAdmin) {
-                    $("#btSave").prop("disabled", true);
+            SPHelper.loadFromSP(function() {
+                $scope.loadOption();
+                $scope.Year = $scope.EffectiveYearMonth.substring(0, 4);
+                $scope.Month = $scope.EffectiveYearMonth.substring(4, 6);
+                if ($scope.ApprovalStatus == "Approved" || $scope.ApprovalStatus == "Pending") {
+                    msg.text("The status is " + $scope.ApprovalStatus + ", can't be edited.");
+                    if ($scope.notAdmin) {
+                        $("#btSave").prop("disabled", true);
+                    }
                 }
-            }
+            }, myError);
         }
     };
 
     $scope.YearMonthChanged = function() {
         if ($scope.Year && $scope.Month) {
-            $scope.YearMonth = $scope.Year + $scope.Month;
+            $scope.EffectiveYearMonth = $scope.Year + $scope.Month;
         }
     };
 
@@ -110,10 +120,9 @@ myApp.controller("myCtrl", function($scope, $http) {
         if (view.startsWith("New")) {
             view = view.substring(3, view.length);
         }
-        var url = dataService + "v" + view + "4Adjustment?$select=value&$filter=BG eq '" + $scope.BG + "' and Company eq '" + $scope.Company + "'" + filter;
-        //console.log(urlStr);
-        httpget(url, function mySuccess(response) {
-            setList(type, response.data.d);
+        var url = dataServiceUrl + "v" + view + "4Adjustment?$select=value&$filter=BG eq '" + $scope.BG + "' and Company eq '" + $scope.Company + "'" + filter;
+        HttpGet(url, function mySuccess(result) {
+            setList(type, result.d);
         });
     };
 
@@ -123,9 +132,9 @@ myApp.controller("myCtrl", function($scope, $http) {
         if (view.startsWith("New")) {
             view = view.substring(3, view.length);
         }
-        var url = dataService + "v" + view + "4Adjustment?$filter=BG eq '" + $scope.BG + "' and Company eq '" + $scope.Company + "'";
-        httpget(url, function mySucces(response) {
-            setList(type, response.data.d);
+        var url = dataServiceUrl + "v" + view + "4Adjustment?$filter=BG eq '" + $scope.BG + "' and Company eq '" + $scope.Company + "'";
+        HttpGet(url, function mySucces(result) {
+            setList(type, result.d);
         });
     };
 
@@ -134,8 +143,8 @@ myApp.controller("myCtrl", function($scope, $http) {
             return;
         }
         var url = profileListUrl + "?$filter=BG eq '" + $scope.BG + "' and Company eq '" + $scope.Company + "'&$orderby=DomainAccount&$top=999";
-        httpget(url, function mySuccess(response) {
-            $scope.SalesPersons = response.data.d;
+        HttpGet(url, function mySuccess(result) {
+            $scope.SalesPersons = result.d;
         });
         //if pre load, then use loadOptionByType
         //loadOptionByType("EndCustomer");
@@ -153,9 +162,8 @@ myApp.controller("myCtrl", function($scope, $http) {
         if ($scope.notAdmin) {
             url = url + " and BG eq '" + $scope.BG + "' and Company eq '" + $scope.Company + "'"
         }
-        httpget(url, function mySuccess(response) {
-            console.log(response.data.d);
-            var d = response.data.d[0];
+        HttpGet(url, function mySuccess(result) {
+            var d = result.d[0];
             $scope.BG = d.BG;
             $scope.Company = d.Company;
             $scope.loadOption();
@@ -211,19 +219,39 @@ myApp.controller("myCtrl", function($scope, $http) {
         return true;
     }
 
-    PreSaveAction = function() {
-        SPHelper.copyToSpFields($scope);
+    function checkAndSaveToSP() {
         if (!checkStatus()) {
-            return false;
+            return;
         }
         if (!checkCondition()) {
-            return false;
+            return;
         }
         if (!checkValue()) {
-            return false;
+            return;
         }
-        return true;
+        SPHelper.saveToSP(listName, !$scope.isNew, function() {
+            msg.text("saved");
+            backToSPListPage();
+        });
     };
+
+    function backToSPListPage() {
+        STSNavigate(myUtility.formatSPSourceUrl(myUtility.getParam("Source")));
+    };
+
+    PreSaveAction = function() {
+        checkAndSaveToSP();
+        return false;
+    };
+
+    $("#btSave").click(function() {
+        //$("[value='Save']:first").click();
+        checkAndSaveToSP();
+    });
+    $("#btCancel").click(function() {
+        //$("[value='Cancel']:first").click();
+        backToSPListPage();
+    });
 
     $scope.searchActualBudget = function() {
         msg.text("");
@@ -247,8 +275,8 @@ myApp.controller("myCtrl", function($scope, $http) {
         }
         $scope.status = "loading:" + condition;
         console.log(queryActualBudgetUrl + "?" + condition);
-        httpget(queryActualBudgetUrl + "?" + condition, function mySuccess(response) {
-            $scope.ActualBudget = response.data.d;
+        HttpGet(queryActualBudgetUrl + "?" + condition, function mySuccess(result) {
+            $scope.ActualBudget = result.d;
             var myDate = new Date();
             $scope.status = "loaded at " + myDate.toLocaleTimeString();
         }, function myError(response) {
@@ -262,21 +290,6 @@ myApp.controller("myCtrl", function($scope, $http) {
     };
 
     $scope.SalesTypes = ['T', 'D'];
-
-    $("#btSave").click(function() {
-        $("[value='Save']:first").click();
-    });
-    $("#btCancel").click(function() {
-        $("[value='Cancel']:first").click();
-    });
-
-    function httpget(url, success, error = myError) {
-        $http({
-            method: "GET",
-            url: url,
-            headers: headers
-        }).then(success, error);
-    };
 
     function myError(response) {
         msg.text(response.status);
