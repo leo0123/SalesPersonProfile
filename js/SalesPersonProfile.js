@@ -80,6 +80,7 @@ myApp.controller("myCtrl", function($scope, $http) {
     $scope.selectedDomainAccountChanged = function(type) {
         msg.text("");
         var d = $scope.selectedDomainAccount;
+        //d.ntaccount = d.ntaccount.trim();
         var tmp = {};
         tmp.EmployeeID = d.Race;
         tmp.EmployeeCode = d.Emp_Code;
@@ -234,6 +235,7 @@ myApp.controller("myCtrl", function($scope, $http) {
             msg.text("change Domain Account incompleted");
             return;
         }
+        $scope.DomainAccount = $scope.DomainAccount.trim();
         SPHelper.saveToSP(listName, !$scope.isNew, function() {
             msg.text("saved");
             backToSPListPage();
@@ -248,13 +250,20 @@ myApp.controller("myCtrl", function($scope, $http) {
         checkAndSaveToSP();
         return false;
     };
+    function getUpdateSql() {
+      var condition = $scope.RequestPermission.replace(/'/g, "''");
+      $scope.SQL = "update [SAPBW3Production].[spp].[vUsersLine]"
+                  +" set Condition='"+condition+"'"
+                  +" where UserName='"+$scope.Email+"'";
+    }
     $scope.openPermissionEditor = function() {
         if (!$scope.myPermissionFormUrl) {
             $scope.myPermissionFormUrl = myPermissionFormUrl;
             $scope.myPermissionFormReady = function() {
-                myPermissionHelper.save = function(Permission, JSONStr) {
-                    $scope.Permission = Permission;
+                myPermissionHelper.save = function(RequestPermission, JSONStr) {
+                    $scope.RequestPermission = RequestPermission;
                     $scope.JSONStr = JSONStr;
+                    getUpdateSql();
                 };
                 myPermissionHelper.close = function() {
                     $scope.showPermission = false;
@@ -263,7 +272,7 @@ myApp.controller("myCtrl", function($scope, $http) {
             };
         } else {
             $scope.showPermission = !$scope.showPermission;
-            myPermissionHelper.load($scope.BG, $scope.Permission, $scope.JSONStr);
+            myPermissionHelper.load($scope.BG, $scope.RequestPermission, $scope.JSONStr);
         }
     };
 });

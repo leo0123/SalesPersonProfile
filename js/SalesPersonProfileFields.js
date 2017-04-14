@@ -22,6 +22,7 @@ var SPPFieldsConfig = {
     },
     RequestPermission: {},
     EffectivePermission: {},
+    JSONStr: {},
     TerminateDate: {},
     Status: {},
     Office: {},

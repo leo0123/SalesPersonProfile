@@ -2,7 +2,7 @@ var angular = require("angular");
 var $ = require("jquery");
 
 var myFormUrl = mySalesPersonProfileConfig.myDisplaySectionUrl;
-var dataService = mySalesPersonProfileConfig.dataService;
+var dataServiceUrl = mySalesPersonProfileConfig.dataServiceUrl;
 var adjustUrl = mySalesPersonProfileConfig.SPListServer + "Lists/Adjustment%20Record/NewForm.aspx";
 var headers = {
     "accept": "application/json;odata=verbose"
@@ -10,7 +10,7 @@ var headers = {
 
 $(function() {
     getTr("JSONStr").hide();
-    getTr("Department").hide();
+    //getTr("Department").hide();
 });
 
 function getTr(FieldName) {
@@ -39,7 +39,7 @@ myApp.controller("myCtrl", function($scope, $http) {
             $scope.btName = "hide";
             $http({
                 method: "GET",
-                url: dataService + "vSalesCustomer?$filter=SalesPerson eq '" + NTAccount + "'&$orderby=EndCustomer",
+                url: dataServiceUrl + "vSalesCustomer?$filter=SalesPerson eq '" + NTAccount + "'&$orderby=EndCustomer",
                 headers: headers
             }).then(function mySucces(response) {
                 $scope.Customers = response.data.d;

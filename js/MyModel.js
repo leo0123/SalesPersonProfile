@@ -19,7 +19,7 @@ var headers = {
 	SPUserProfileUrl: myConfig.SPUserProfileUrl
 };*/
 
-var serviceUrl = mySalesPersonProfileConfig.dataService;
+var serviceUrl = mySalesPersonProfileConfig.dataServiceUrl;
 
 myPermissionModel.OptionManager = function () {
 	var self = this;

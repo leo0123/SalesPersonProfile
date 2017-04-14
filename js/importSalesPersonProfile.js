@@ -29,9 +29,10 @@ var c = 1;
 $(function() {
     var type;
     //type = "NTAccount";
-    //type = "HR"
-    type = "OldAccount";
-    //type = "ADInfo"
+    //type = "HR";
+    //type = "OldAccount";
+    //type = "ADInfo";
+    type = "usersline";
     switch (type) {
         case "NTAccount":
             url4GetData = dataUrlNewNtAccount;
@@ -49,6 +50,9 @@ $(function() {
             url4GetData = listUrl + "?$top=999";
             currentCall = getADInfo;
             break;
+        case "usersline":
+            url4GetData = dataUrlUsersLine;
+            currentCall = updateUsersLine;
     }
     getFormDigestService();
 });
@@ -145,7 +149,7 @@ function updateSalesOrgDivision() {
     });
 };
 
-function getUsersLine() {
+/*function getUsersLine() {
     $.getJSON(dataUrlUsersLine, function(data) {
         l = 0;
         m = 0;
@@ -156,9 +160,9 @@ function getUsersLine() {
         x = 0;
         updateUsersLine();
     });
-};
+};*/
 
-function getUsersLineMetadata(item) {
+/*function getUsersLineMetadata(item) {
 
     var metadata = {
         __metadata: metaDataType,
@@ -167,9 +171,9 @@ function getUsersLineMetadata(item) {
         //JSONStr: ""//item.Condition
     };
     return metadata;
-};
+};*/
 
-function updateUsersLine() {
+/*function updateUsersLine() {
     if (x >= list.length) {
         $("#msg").text("Total:" + total + ";Finish:" + x);
         return;
@@ -203,7 +207,7 @@ function updateUsersLine() {
             showMsg();
         }
     });
-};
+};*/
 
 function getMetadata4AD(item) {
     return {
@@ -300,6 +304,22 @@ function updateOldAccount() {
     var metadata = getMetadata4OldAccount(subList);
     c = subList.length;
     ajaxpost(lastItem.ID, metadata);
+};
+
+function getMetadata4UsersLine(item) {
+    return {
+        __metadata: metaDataType,
+        RequestPermission: item.Condition,
+        EffectivePermission: item.Condition
+    };
+};
+function updateUsersLine() {
+    if (list.length == 0) {
+        return;
+    }
+    var item = list.shift();
+    var metadata = getMetadata4UsersLine(item);
+    ajaxpost(item.ID, metadata);
 };
 
 function getMetadata4Hr(item) {

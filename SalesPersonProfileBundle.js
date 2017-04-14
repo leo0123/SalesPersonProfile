@@ -49,139 +49,176 @@ CustomizeExpression.prototype.constructor = CustomizeExpression;
 module.exports=CustomizeExpression;
 
 },{"./Expression.js":4}],3:[function(require,module,exports){
-var ExpressionManager=require("./ExpressionManager.js");
-var CustomizeExpression=require("./CustomizeExpression.js");
+var ExpressionManager = require("./ExpressionManager.js");
+var CustomizeExpression = require("./CustomizeExpression.js");
 
 function CustomizeExpressionManager() {
-	ExpressionManager.call(this);
+  ExpressionManager.call(this);
 
-	//var self = this;
-	var expR;
-	this.newRoot = function () {
-		expR = new CustomizeExpression('root');
-		expR.GroupLogic = " and ";
-	};
-	this.newRoot();
-	//expR.setGroup();
-	//expR.Field = 'root';
-	this.setRoot = function (jsonObject) {
-		expR = new CustomizeExpression('root');
-		expR.GroupLogic = " and ";
-		expR.CopyFrom(jsonObject, null);
-	};
-	this.tryParse = function (lists) {
-		if (expR.Field != 'root' || expR.IsGroup != true) {
-			return
-		} else {
-			for (var i = 0; i < expR.Children.length; i++) {
-				var group = expR.Children[i];
-				if (group.IsGroup == false || group.GroupLogic != ' or ') {
-					continue;
-				} else {
-					var list = tryParseList(group);
-					if (list != null) {
-						fillList(group, list, lists);
-					}
+  //var self = this;
+  var expR;
+  var expSR;
+  this.newRoot = function() {
+    expR = new CustomizeExpression('root');
+    expR.GroupLogic = " and ";
+  };
+  this.newRoot();
+  //expR.setGroup();
+  //expR.Field = 'root';
+  this.setRoot = function(jsonObject) {
+    var exp = new CustomizeExpression();
+    exp.CopyFrom(jsonObject, null);
+		if (exp.IsGroup && exp.Field == "SuperRoot") {
+			expSR = exp;
+			for (var i in exp.Children) {
+				var e = exp.Children[i];
+				if (e.IsGroup && e.Field == "root") {
+					expR = e;
 				}
 			}
-		}
-	};
-	fillList = function (group, list, lists) {
-		var selectedList;
-		switch (group.Field) {
-		case 'BG':
-			selectedList = lists.selectedBG;
-			break;
-		case 'ProfitCenter':
-			selectedList = lists.selectedProfitCenter;
-			break;
-		case 'SalesP':
-			selectedList = lists.selectedSalesP;
-			break;
-		case '[End Customer]':
-			selectedList = lists.selectedEndCustomer;
-			break;
-		case 'CustName':
-			selectedList = lists.selectedSoldToCustomer;
-			break;
-		case 'Office':
-			selectedList = lists.selectedOffice;
-			break;
-		case '[Sales Office]':
-			selectedList = lists.selectedSalesOffice;
-			break;
-		case '[Sales Type]':
-			selectedList = lists.selectedSalesType;
-			break;
-		}
-		for (var i = 0; i < list.length; i++) {
-			selectedList.push(list[i]);
-		}
-	};
-	tryParseList = function (group) {
-		var list = [];
-		for (var i = 0; i < group.Children.length; i++) {
-			var child = group.Children[i];
-			if (child.IsGroup == true || child.Field != group.Field) {
-				return;
-			} else {
-				list.push(child.Value);
-			}
-		}
-		return list;
-	};
+		} else if (exp.IsGroup && exp.Field == "root") {
+      expR = exp;
+    } else {
+      expR = new CustomizeExpression('root');
+      expR.GroupLogic = " and ";
+      expR.addChild(exp);
+    }
+    /*expR = new CustomizeExpression('root');
+    expR.GroupLogic = " and ";
+    expR.CopyFrom(jsonObject, null);
+    expR.Field = "root";*/
+  };
 
-	this.getRoot = function () {
-		return expR;
-	};
-	this.getNewRoot = function () {
-		this.newRoot();
-		return expR;
-	};
+  this.tryParse = function(lists) {
+    if (expR.Field != 'root' || expR.IsGroup != true) {
+      return
+    } else {
+      for (var i = 0; i < expR.Children.length; i++) {
+        var group = expR.Children[i];
+        if (group.IsGroup == false || group.GroupLogic != ' or ') {
+          continue;
+        } else {
+          var list = tryParseList(group);
+          if (list != null) {
+            fillList(group, list, lists);
+          }
+        }
+      }
+    }
 
-	this.addInGroup = function (field, value, operation) {
-		var group = expR.getChildGroup(field);
-		if (group == null) {
-			group = expR.createChildGroup(field);
-		}
-		this.add(group, field, value, operation);
-	};
+    function fillList(group, list, lists) {
+      var selectedList;
+      switch (group.Field) {
+        case 'BG':
+          selectedList = lists.selectedBG;
+          break;
+        case 'ProfitCenter':
+          selectedList = lists.selectedProfitCenter;
+          break;
+        case 'SalesP':
+          selectedList = lists.selectedSalesP;
+          break;
+        case '[End Customer]':
+          selectedList = lists.selectedEndCustomer;
+          break;
+        case 'CustName':
+          selectedList = lists.selectedSoldToCustomer;
+          break;
+        case 'Office':
+          selectedList = lists.selectedOffice;
+          break;
+        case '[Sales Office]':
+          selectedList = lists.selectedSalesOffice;
+          break;
+        case '[Sales Type]':
+          selectedList = lists.selectedSalesType;
+          break;
+      }
+      for (var i = 0; i < list.length; i++) {
+        selectedList.push(list[i]);
+      }
+    };
 
-	this.clearGroup = function (field) {
-		var group = expR.getChildGroup(field);
-		if (group != null) {
-			group.Children = [];
-		}
-	}
+    function tryParseList(group) {
+      var list = [];
+      for (var i = 0; i < group.Children.length; i++) {
+        var child = group.Children[i];
+        if (child.IsGroup == true || child.Field != group.Field) {
+          return;
+        } else {
+          list.push(child.Value);
+        }
+      }
+      return list;
+    };
+  };
+
+  this.getRoot = function() {
+    return expR;
+  };
+  this.getSuperRoot = function(BG) {
+    if (expSR) {
+      expR.tryRemoveSelf();
+      return expSR;
+    }
+    expSR = new CustomizeExpression("SuperRoot");
+    expSR.IsGroup = true;
+    expSR.addChild(expR);
+    expR.tryRemoveSelf();
+    var expBG = new CustomizeExpression();
+    expBG.setFieldValue("BG", BG);
+    expSR.addChild(expBG);
+    return expSR;
+  };
+  this.getNewRoot = function() {
+    this.newRoot();
+    return expR;
+  };
+
+  this.addInGroup = function(field, value, operation) {
+    var group = expR.getChildGroup(field);
+    if (group == null) {
+      group = expR.createChildGroup(field);
+    }
+    this.add(group, field, value, operation);
+  };
+
+  this.clearGroup = function(field) {
+    var group = expR.getChildGroup(field);
+    if (group != null) {
+      group.Children = [];
+    }
+  }
 }
 
 CustomizeExpressionManager.prototype = Object.create(ExpressionManager.prototype);
 
 CustomizeExpressionManager.prototype.constructor = CustomizeExpressionManager;
 
-module.exports=CustomizeExpressionManager;
+module.exports = CustomizeExpressionManager;
 
 },{"./CustomizeExpression.js":2,"./ExpressionManager.js":5}],4:[function(require,module,exports){
+
 function Expression() {
-	this.IsGroup = true;
-	var Parent = null;
-	this.getParent = function () {
-		return Parent;
-	};
-	this.setParent = function (e) {
-		Parent = e;
-	};
+  this.IsGroup = true;
+  var Parent = null;
+  this.getParent = function() {
+    return Parent;
+  };
+  this.setParent = function(e) {
+    Parent = e;
+  };
 
-	//FIELD VALUE
-	this.Field = "";
-	this.Value = "";
-	this.Operation = "";
-	//FIELD VALUE
+  //FIELD VALUE
+  this.Field = "";
+  this.Value = "";
+  this.Operation = "";
+  //FIELD VALUE
 
-	//GROUP
-	this.GroupLogic = " or ";
-	this.Children = [];
-	//GROUP
+  //GROUP
+  this.GroupLogic = " or ";
+  this.Children = [];
+  //GROUP
 };
 
 //Expression.prototype.getParent = function () {
@@ -192,97 +229,152 @@ function Expression() {
 //};
 
 //GROUP
-Expression.prototype.setGroup = function () {
-	this.GroupLogic = " or ";
-	this.IsGroup = true;
-	this.Field = null;
-	this.Value = null;
-	this.Operation = null;
-	this.Children = [];
+Expression.prototype.setGroup = function() {
+  this.GroupLogic = " or ";
+  this.IsGroup = true;
+  this.Field = null;
+  this.Value = null;
+  this.Operation = null;
+  this.Children = [];
 };
-Expression.prototype.addChild = function (exp) {
-	this.Children.push(exp);
-	exp.setParent(this);
+Expression.prototype.addChild = function(exp) {
+  this.Children.push(exp);
+  exp.setParent(this);
 };
-Expression.prototype.insertChild = function (leftExp, rightExp) {
-	var i = this.Children.indexOf(leftExp);
-	this.Children.splice(i + 1, 0, rightExp);
-	rightExp.setParent(this);
+Expression.prototype.insertChild = function(leftExp, rightExp) {
+  var i = this.Children.indexOf(leftExp);
+  this.Children.splice(i + 1, 0, rightExp);
+  rightExp.setParent(this);
 };
-Expression.prototype.changeGroupLogic = function () {
-	if (this.getParent().GroupLogic == " and ") {
-		this.getParent().GroupLogic = " or ";
-	} else {
-		this.getParent().GroupLogic = " and ";
-	}
+Expression.prototype.changeGroupLogic = function() {
+  if (this.getParent().GroupLogic == " and ") {
+    this.getParent().GroupLogic = " or ";
+  } else {
+    this.getParent().GroupLogic = " and ";
+  }
 };
-Expression.prototype.getGroupLogic = function () {
-	if (this.getParent().Children.indexOf(this) == 0) {
-		return "";
-	} else {
-		return this.getParent().GroupLogic;
-	}
+Expression.prototype.getGroupLogic = function() {
+  if (this.getParent().Children.indexOf(this) == 0) {
+    return "";
+  } else {
+    return this.getParent().GroupLogic;
+  }
 };
-Expression.prototype.getChildren = function () {
-	return this.Children;
+Expression.prototype.getChildren = function() {
+  return this.Children;
 };
-Expression.prototype.removeChild = function (exp) {
-	var i = this.Children.indexOf(exp);
-	this.Children.splice(i, 1);
-	exp.setParent(null);
+Expression.prototype.removeChild = function(exp) {
+  var i = this.Children.indexOf(exp);
+  this.Children.splice(i, 1);
+  exp.setParent(null);
+};
+Expression.prototype.replaceChild = function(exp, newExp) {
+  var i = this.Children.indexOf(exp);
+  this.Children.splice(i, 1, newExp);
+  exp.setParent(null);
+  newExp.setParent(this);
 };
 //GROUP
 
 //FIELD VALUE
-Expression.prototype.setFieldValue = function (field, value, operation) {
-	this.Field = field;
-	this.Value = value;
-	this.Operation = operation;
-	this.IsGroup = false;
-	this.GroupLogic = "";
-	this.Children = null;
+Expression.prototype.setFieldValue = function(field, value, operation = "=") {
+  this.Field = field;
+  this.Value = value;
+  this.Operation = operation;
+  this.IsGroup = false;
+  this.GroupLogic = "";
+  this.Children = null;
 };
-Expression.prototype.removeSelf = function () {
-	this.getParent().removeChild(this);
+Expression.prototype.removeSelf = function() {
+  var ancestor = this.getParent();
+  ancestor.removeChild(this);
+  while (ancestor.Field != "root" && ancestor.Children.length <= 1) {
+    ancestor = ancestor.getParent();
+  }
+  ancestor.tryRemoveSelf();
+};
+Expression.prototype.replaceSelf = function(exp) {
+  this.getParent().replaceChild(this, exp);
 };
 //FIELD VALUE
 
-Expression.prototype.ToString = function () {
-	if (!this.IsGroup) {
-		return this.Field + " " + this.Operation + " " + this.Value;
-	} else {
-		var value = "";
-		for (var i = 0; i < this.Children.length; i++) {
-			var child = this.Children[i];
-			if (value == "") {
-				value = child.ToString();
-			} else {
-				value += this.GroupLogic + child.ToString();
-			}
-		}
-		return "(" + value + ")";
-	}
+Expression.prototype.ToString = function() {
+  if (!this.IsGroup) {
+    return this.Field + " " + this.Operation + " " + this.Value;
+  } else {
+    var value = "";
+    for (var i = 0; i < this.Children.length; i++) {
+      var child = this.Children[i];
+      if (value == "") {
+        value = child.ToString();
+      } else {
+        value += this.GroupLogic + child.ToString();
+      }
+    }
+    return "(" + value + ")";
+  }
 };
 
-Expression.prototype.CopyFrom = function (e, parent) {
-	this.IsGroup = e.IsGroup;
-	this.Field = e.Field;
-	this.Value = e.Value;
-	this.Operation = e.Operation;
-	this.GroupLogic = e.GroupLogic;
-	this.setParent(parent);
-	if (e.IsGroup) {
-		for (var i = 0; i < e.Children.length; i++) {
-			var e1 = e.Children[i];
-			var ex = new Expression();
-			ex.CopyFrom(e1, this);
-			this.Children.push(ex);
-		}
-	}
-	return this;
+Expression.prototype.CopyFrom = function(e, parent) {
+  this.IsGroup = e.IsGroup;
+  this.Field = e.Field;
+  this.Value = e.Value;
+  this.Operation = e.Operation;
+  this.GroupLogic = e.GroupLogic;
+  this.setParent(parent);
+  if (e.IsGroup) {
+    for (var i = 0; i < e.Children.length; i++) {
+      var e1 = e.Children[i];
+      var ex = new Expression();
+      ex.CopyFrom(e1, this);
+      this.Children.push(ex);
+    }
+  }
+  return this;
 };
 
-module.exports=Expression;
+Expression.prototype.toGroup = function() {
+	var group = new Expression();
+	group.setGroup();
+	this.replaceSelf(group);
+	group.addChild(this);
+};
+
+Expression.prototype.tryRemoveSelf = function() {
+  if (this.IsGroup === false) {
+    return;
+  }
+  if (this.Children.length >= 1) {
+    var list = this.Children.slice();
+    while (list.length > 0) {
+      var exp = list.pop();
+      exp.tryRemoveSelf();
+    }
+  }
+  if (this.Children.length == 1) {
+		if (this.Field == "root") {
+      if (this.Children[0].IsGroup) {
+        var tmpExp = this.Children[0];
+        for (var i in tmpExp.Children) {
+          this.addChild(tmpExp.Children[i]);
+        }
+        this.removeChild(tmpExp);
+      }
+			return;
+		}
+    this.replaceSelf(this.Children[0]);
+    return;
+  }
+  if (this.Children.length == 0) {
+		if (this.Field == "root") {
+			return;
+		}
+    this.removeSelf();
+    return;
+  }
+};
+
+module.exports = Expression;
 
 },{}],5:[function(require,module,exports){
 var Expression=require("./Expression.js");
@@ -355,7 +447,7 @@ var headers = {
 	SPUserProfileUrl: myConfig.SPUserProfileUrl
 };*/
 
-var serviceUrl = mySalesPersonProfileConfig.dataService;
+var serviceUrl = mySalesPersonProfileConfig.dataServiceUrl;
 
 myPermissionModel.OptionManager = function () {
 	var self = this;
@@ -532,267 +624,277 @@ var ParseSqlHelper = require("./ParseSql.js");
 
 //var myPermissionApp = myPermissionApp || {};
 var myPermissionHelper = mySalesPersonProfileConfig.myPermissionHelper;
-var serviceUrl = mySalesPersonProfileConfig.dataService;
+var serviceUrl = mySalesPersonProfileConfig.dataServiceUrl;
 
 //myPermissionApp.
 myPermissionCtrl = function($scope, $http, $location) {
-    //var log = myPermissionApp.log;
-    var expM = new CustomizeExpressionManager();
-    var currentExp;
-    var currentGroup;
-    var dialogStatus = 'status';
-    var spPermission = $("[title='Permission']");
-    var spJSONStr = $("[title='JSONStr']");
-    var spDepartment = $("[title='Department']");
-    //var theBG = spDepartment.val();
-    //var serviceUrl = myPermissionModel.UrlList.serviceUrl;
+  //var log = myPermissionApp.log;
+  var expM = new CustomizeExpressionManager();
+  var currentExp;
+  var currentGroup;
+  var dialogStatus = 'status';
+  var BG;
+  //var spPermission = $("[title='Permission']");
+  //var spJSONStr = $("[title='JSONStr']");
+  //var spDepartment = $("[title='Department']");
+  //var theBG = spDepartment.val();
+  //var serviceUrl = myPermissionModel.UrlList.serviceUrl;
+  $scope.expRoot = expM.getRoot();
+  $scope.OptionManager = new myPermissionModel.OptionManager();
+
+  myPermissionHelper.load = function(_BG, Permission, JSONStr) {
+    load(_BG, Permission, JSONStr);
+  };
+
+  function load(_BG, Permission, JSONStr) {
+    BG = _BG;
+    //theBG = spDepartment.val();
+    if (!BG) {
+      $("#msg").text("Department can't be empty");
+      alert("Department can't be empty");
+      return;
+    }
+    //$("#permissionEditor").show();
+
+    if (JSONStr) {
+      setRoot(angular.fromJson(JSONStr));
+    } else if (Permission) {
+      try {
+        var helper = new ParseSqlHelper();
+        var exp = helper.ParseSql(Permission);
+        if (exp != null) {
+          /*var r = new Expression();
+          r.IsGroup = true;
+          r.Children.push(exp);*/
+          var o = angular.fromJson(angular.toJson(exp));
+          setRoot(o);
+        } else {
+          $scope.msg = "can't parse original permission, please contact IT or create new permission";
+        }
+      } catch (e) {
+        $scope.msg = "can't parse original permission, please contact IT or create new permission";
+      }
+    } else {
+      $scope.expRoot = expM.getNewRoot();
+    }
+    //$scope.$apply();
+  };
+  /*function openPermissionEditor() {
+      //theBG = spDepartment.val();
+      if (!spDepartment.val()) {
+          $("#msg").text("Department can't be empty");
+          alert("Department can't be empty");
+          return;
+      }
+      $("#permissionEditor").show();
+
+      if (spJSONStr.val()) {
+          setRoot(angular.fromJson(spJSONStr.val()));
+      } else if (spPermission.val()) {
+          try {
+              var helper = new ParseSqlHelper();
+              var exp = helper.ParseSql(spPermission.val());
+              if (exp != null) {
+                  var r = new Expression();
+                  r.IsGroup = true;
+                  r.Children.push(exp);
+                  var o = angular.fromJson(angular.toJson(r));
+                  setRoot(o);
+              } else {
+                  $scope.msg = "can't parse original permission, please contact IT or create new permission";
+              }
+          } catch (e) {
+              $scope.msg = "can't parse original permission, please contact IT or create new permission";
+          }
+      } else {
+          $scope.expRoot = expM.getNewRoot();
+      }
+      $scope.$apply();
+  };*/
+  //$("#btOpenPermissionEditor").click(openPermissionEditor);
+
+  $scope.resetExpRoot = function() {
+    $scope.expRoot = expM.getNewRoot();
+  };
+
+  $scope.btPermissionOKClick = function() {
+    //spJSONStr.val(angular.toJson(expM.getRoot()));
+    //spPermission.val(expM.getRoot().ToString());
+    //TODO default add BG
+    myPermissionHelper.save(expM.getSuperRoot(BG).ToString(), angular.toJson(expM.getSuperRoot(BG)));
+    //$("#permissionEditor").hide();
+    //$scope.$parent.$parent.showPermission = false;
+    myPermissionHelper.close();
+  };
+  $scope.btPermissionCancelClick = function() {
+    //$("#permissionEditor").hide();
+    //$scope.$parent.$parent.showPermission = false;
+    myPermissionHelper.close();
+  };
+
+  function setRoot(jsonObject) {
+    expM.setRoot(jsonObject);
     $scope.expRoot = expM.getRoot();
-    $scope.OptionManager = new myPermissionModel.OptionManager();
+    //$scope.$apply();
+  };
 
-    myPermissionHelper.load = function(BG, Permission, JSONStr){
-        load(BG, Permission, JSONStr);
-    };
-    function load(BG, Permission, JSONStr) {
-        //theBG = spDepartment.val();
-        if (!BG) {
-            $("#msg").text("Department can't be empty");
-            alert("Department can't be empty");
-            return;
-        }
-        //$("#permissionEditor").show();
+  $scope.delayLoadOption = function(type) {
+    $scope.OptionManager.init(BG, $http, $scope, "Options");
+    $scope.OptionManager.tryToGetOption(type, false, "");
+  };
 
-        if (JSONStr) {
-            setRoot(angular.fromJson(JSONStr));
-        } else if (Permission) {
-            try {
-                var helper = new ParseSqlHelper();
-                var exp = helper.ParseSql(Permission);
-                if (exp != null) {
-                    var r = new Expression();
-                    r.IsGroup = true;
-                    r.Children.push(exp);
-                    var o = angular.fromJson(angular.toJson(r));
-                    setRoot(o);
-                } else {
-                    $scope.msg = "can't parse original permission, please contact IT or create new permission";
-                }
-            } catch (e) {
-                $scope.msg = "can't parse original permission, please contact IT or create new permission";
-            }
-        } else {
-            $scope.expRoot = expM.getNewRoot();
-        }
-        //$scope.$apply();
-    };
-    function openPermissionEditor() {
-        //theBG = spDepartment.val();
-        if (!spDepartment.val()) {
-            $("#msg").text("Department can't be empty");
-            alert("Department can't be empty");
-            return;
-        }
-        $("#permissionEditor").show();
+  $scope.inputChanged = function(type) {
+    if ($scope["input" + type].length == 2) {
+      $scope.OptionManager.tryToGetOption(type, false, $scope["input" + type]);
+    }
+  };
 
-        if (spJSONStr.val()) {
-            setRoot(angular.fromJson(spJSONStr.val()));
-        } else if (spPermission.val()) {
-            try {
-                var helper = new ParseSqlHelper();
-                var exp = helper.ParseSql(spPermission.val());
-                if (exp != null) {
-                    var r = new Expression();
-                    r.IsGroup = true;
-                    r.Children.push(exp);
-                    var o = angular.fromJson(angular.toJson(r));
-                    setRoot(o);
-                } else {
-                    $scope.msg = "can't parse original permission, please contact IT or create new permission";
-                }
-            } catch (e) {
-                $scope.msg = "can't parse original permission, please contact IT or create new permission";
-            }
-        } else {
-            $scope.expRoot = expM.getNewRoot();
-        }
-        $scope.$apply();
-    };
-    //$("#btOpenPermissionEditor").click(openPermissionEditor);
+  $scope.selectedChanged = function(field) {
+    var list = null;
+    if (field == $scope.OptionManager.TypeList.BG) {
+      list = $scope.selectedBG;
+    } else if (field == $scope.OptionManager.TypeList.ProfitCenter) {
+      list = $scope.selectedProfitCenter;
+    } else if (field == $scope.OptionManager.TypeList.DomainAccount) {
+      list = $scope.selectedDomainAccount;
+    } else if (field == $scope.OptionManager.TypeList.EndCustomer) {
+      list = $scope.selectedEndCustomer;
+    } else if (field == $scope.OptionManager.TypeList.SoldToCustomer) {
+      list = $scope.selectedSoldToCustomer;
+    } else if (field == $scope.OptionManager.TypeList.Office) {
+      list = $scope.selectedOffice;
+    } else if (field == $scope.OptionManager.TypeList.SalesOffice) {
+      list = $scope.selectedSalesOffice;
+    } else if (field == $scope.OptionManager.TypeList.SalesType) {
+      list = $scope.selectedSalesType;
+    }
 
-    $scope.resetExpRoot = function() {
-        $scope.expRoot = expM.getNewRoot();
-    };
+    expM.clearGroup(field);
+    for (var i = 0; i < list.length; i++) {
+      var value = "'" + list[i] + "'";
+      expM.addInGroup(field, value, "=");
+    }
+  };
 
-    $scope.btPermissionOKClick = function() {
-        //spJSONStr.val(angular.toJson(expM.getRoot()));
-        //spPermission.val(expM.getRoot().ToString());
-        myPermissionHelper.save(expM.getRoot().ToString(), angular.toJson(expM.getRoot()));
-        //$("#permissionEditor").hide();
-        //$scope.$parent.$parent.showPermission = false;
-        myPermissionHelper.close();
-    };
-    $scope.btPermissionCancelClick = function() {
-        //$("#permissionEditor").hide();
-        //$scope.$parent.$parent.showPermission = false;
-        myPermissionHelper.close();
-    };
+  $scope.addInGroup = function(group) {
+    currentGroup = group;
+    dialogStatus = "addInGroup";
+    showPanel();
+  };
+  $scope.addGroup = function(group) {
+    currentGroup = group;
+    dialogStatus = "addGroup";
+    showPanel();
+  };
+  $scope.changeGroupLogic = function(exp) {
+    exp.changeGroupLogic();
+  };
 
-    function setRoot(jsonObject) {
-        expM.setRoot(jsonObject);
-        $scope.expRoot = expM.getRoot();
-        //$scope.$apply();
-    };
+  $scope.openSingleEditor = function(exp) {
+    currentExp = exp;
+    exp.Field = $scope.OptionManager.getStandardField(exp.Field);
 
-    $scope.delayLoadOption = function(type) {
-        $scope.OptionManager.init(spDepartment.val(), $http, $scope, "Options");
-        $scope.OptionManager.tryToGetOption(type, false, "");
-    };
+    $scope.singleField = exp.Field;
+    $scope.singleValue = exp.Value.replace(/'/g, "");
+    $scope.singleOperation = exp.Operation.replace(/ /g, "");
 
-    $scope.inputChanged = function(type) {
-        if ($scope["input" + type].length == 2) {
-            $scope.OptionManager.tryToGetOption(type, false, $scope["input" + type]);
-        }
-    };
+    dialogStatus = "edit";
+    if (exp.Field == $scope.OptionManager.TypeList.EndCustomer ||
+      exp.Field == $scope.OptionManager.TypeList.SoldToCustomer) {
+      $scope.inputCommon = $scope.singleValue
+    }
+    showPanel();
+  };
+  $scope.removeSelf = function(exp) {
+    exp.removeSelf();
+  }
+  $scope.expToGroup = function(exp) {
+    exp.toGroup();
+  }
 
-    $scope.selectedChanged = function(field) {
-        var list = null;
-        if (field == $scope.OptionManager.TypeList.BG) {
-            list = $scope.selectedBG;
-        } else if (field == $scope.OptionManager.TypeList.ProfitCenter) {
-            list = $scope.selectedProfitCenter;
-        } else if (field == $scope.OptionManager.TypeList.DomainAccount) {
-            list = $scope.selectedDomainAccount;
-        } else if (field == $scope.OptionManager.TypeList.EndCustomer) {
-            list = $scope.selectedEndCustomer;
-        } else if (field == $scope.OptionManager.TypeList.SoldToCustomer) {
-            list = $scope.selectedSoldToCustomer;
-        } else if (field == $scope.OptionManager.TypeList.Office) {
-            list = $scope.selectedOffice;
-        } else if (field == $scope.OptionManager.TypeList.SalesOffice) {
-            list = $scope.selectedSalesOffice;
-        } else if (field == $scope.OptionManager.TypeList.SalesType) {
-            list = $scope.selectedSalesType;
-        }
+  $scope.selectedSingleFieldChanged = function(field) {
+    $scope.singleValue = "";
+    searchCommon();
+  };
 
-        expM.clearGroup(field);
-        for (var i = 0; i < list.length; i++) {
-            var value = "'" + list[i] + "'";
-            expM.addInGroup(field, value, "=");
-        }
-    };
+  function showPanel() {
+    $("#setFieldValueContainer").show();
+    $scope.singleOperation = $scope.singleOperation ? $scope.singleOperation : "=";
+    searchCommon();
+    //$scope.$apply();
+  };
 
-    $scope.addInGroup = function(group) {
-        currentGroup = group;
-        dialogStatus = "addInGroup";
-        showPanel();
-    };
-    $scope.addGroup = function(group) {
-        currentGroup = group;
-        dialogStatus = "addGroup";
-        showPanel();
-    };
-    $scope.changeGroupLogic = function(exp) {
-        exp.changeGroupLogic();
-    };
+  $scope.inputCommonChanged = function() {
+    searchCommon();
+  };
 
-    $scope.openSingleEditor = function(exp) {
-        currentExp = exp;
-        exp.Field = $scope.OptionManager.getStandardField(exp.Field);
+  function searchCommon() {
+    if ($scope.singleField) {
+      if (!$scope.OptionManager.isSalesP($scope.singleField)) {
+        var type = $scope.OptionManager.getType($scope.singleField);
+        $scope.OptionManager.tryToGetOption(type, true, "");
+      } else {
+        $scope.OptionManager.tryToGetOption($scope.OptionManager.TypeList.DomainAccount, true, "", optionLoaded);
+      }
+    }
+  };
 
-        $scope.singleField = exp.Field;
-        $scope.singleValue = exp.Value.replace(/'/g, "");
-        $scope.singleOperation = exp.Operation.replace(/ /g, "");
+  function optionLoaded() {
+    if ($scope.OptionManager.isSalesP($scope.singleField)) {
+      $scope.singleField = $scope.OptionManager.TypeList.DomainAccount;
+      $scope.singleValue = $scope.commonList.find(function(item) {
+        return item.SalesP.toLowerCase() == $scope.singleValue.toLowerCase();
+      }).Value;
+    }
+  };
 
-        dialogStatus = "edit";
-        if (exp.Field == $scope.OptionManager.TypeList.EndCustomer ||
-            exp.Field == $scope.OptionManager.TypeList.SoldToCustomer) {
-            $scope.inputCommon = $scope.singleValue
-        }
-        showPanel();
-    };
+  $scope.btSetFieldValueOKClick = function() {
+    if (!($scope.singleField && $scope.singleOperation && $scope.singleValue)) {
+      return;
+    }
+    var value = "'" + $scope.singleValue + "'";
+    var operation = $scope.singleOperation;
+    if (operation == "like") {
+      operation = " " + operation + " ";
+      //value = "'" + $scope.singleValue + "'";
+    }
+    if (dialogStatus == "addInGroup") {
+      expM.add(currentGroup, $scope.singleField, value, operation);
+    } else if (dialogStatus == "edit") {
+      currentExp.setFieldValue($scope.singleField, value, operation);
+    } else if (dialogStatus == "addGroup") {
+      expM.addGroup(currentGroup, $scope.singleField, value, operation);
+      $scope.expRoot = expM.getRoot();
+    }
+    $("#setFieldValueContainer").hide();
+    $scope.inputCommon = "";
+  };
+  $scope.btSetFieldValueCancelClick = function() {
+    $("#setFieldValueContainer").hide();
+    $scope.inputCommon = "";
+  };
 
-    $scope.selectedSingleFieldChanged = function(field) {
-        $scope.singleValue = "";
-        searchCommon();
-    };
+  $scope.previousTab = function() {
+    if ($scope.selectedTabIndex > 0) {
+      $scope.selectedTabIndex = $scope.selectedTabIndex - 1;
+    }
+  };
+  $scope.nextTab = function() {
+    if ($scope.selectedTabIndex < 7) {
+      $scope.selectedTabIndex = $scope.selectedTabIndex + 1;
+    }
+  };
 
-    function showPanel() {
-        $("#setFieldValueContainer").show();
-        $scope.singleOperation = $scope.singleOperation ? $scope.singleOperation : "=";
-        searchCommon();
-        //$scope.$apply();
-    };
+  $scope.openMenu = function($mdOpenMenu, $event) {
+    $mdOpenMenu($event);
+  };
 
-    $scope.inputCommonChanged = function() {
-        searchCommon();
-    };
-
-    function searchCommon() {
-        if ($scope.singleField) {
-            if (!$scope.OptionManager.isSalesP($scope.singleField)) {
-                var type = $scope.OptionManager.getType($scope.singleField);
-                $scope.OptionManager.tryToGetOption(type, true, "");
-            } else {
-                $scope.OptionManager.tryToGetOption($scope.OptionManager.TypeList.DomainAccount, true, "", optionLoaded);
-            }
-        }
-    };
-
-    function optionLoaded() {
-        if ($scope.OptionManager.isSalesP($scope.singleField)) {
-            $scope.singleField = $scope.OptionManager.TypeList.DomainAccount;
-            $scope.singleValue = $scope.commonList.find(function(item) {
-                return item.SalesP.toLowerCase() == $scope.singleValue.toLowerCase();
-            }).Value;
-        }
-    };
-
-    $scope.btSetFieldValueOKClick = function() {
-        if (!($scope.singleField && $scope.singleOperation && $scope.singleValue)) {
-            return;
-        }
-        var value = "'" + $scope.singleValue + "'";
-        var operation = $scope.singleOperation;
-        if (operation == "like") {
-            operation = " " + operation + " ";
-            //value = "'" + $scope.singleValue + "'";
-        }
-        if (dialogStatus == "addInGroup") {
-            expM.add(currentGroup, $scope.singleField, value, operation);
-        } else if (dialogStatus == "edit") {
-            currentExp.setFieldValue($scope.singleField, value, operation);
-        } else if (dialogStatus == "addGroup") {
-            expM.addGroup(currentGroup, $scope.singleField, value, operation);
-            $scope.expRoot = expM.getRoot();
-        }
-        $("#setFieldValueContainer").hide();
-        $scope.inputCommon = "";
-    };
-    $scope.btSetFieldValueCancelClick = function() {
-        $("#setFieldValueContainer").hide();
-        $scope.inputCommon = "";
-    };
-
-    $scope.previousTab = function() {
-        if ($scope.selectedTabIndex > 0) {
-            $scope.selectedTabIndex = $scope.selectedTabIndex - 1;
-        }
-    };
-    $scope.nextTab = function() {
-        if ($scope.selectedTabIndex < 7) {
-            $scope.selectedTabIndex = $scope.selectedTabIndex + 1;
-        }
-    };
-
-    $scope.openMenu = function($mdOpenMenu, $event) {
-        $mdOpenMenu($event);
-    };
-
-    $scope.onSearchChange = function(event) {
-        event.stopPropagation();
-    };
+  $scope.onSearchChange = function(event) {
+    event.stopPropagation();
+  };
 };
 
-module.exports = myPermissionCtrl;//myPermissionApp;
+module.exports = myPermissionCtrl; //myPermissionApp;
 
 },{"./CustomizeExpressionManager.js":3,"./Expression.js":4,"./MyModel.js":6,"./ParseSql.js":8,"jquery":20}],8:[function(require,module,exports){
 var Expression=require("./Expression.js");
@@ -1167,6 +1269,7 @@ myApp.controller("myCtrl", function($scope, $http) {
     $scope.selectedDomainAccountChanged = function(type) {
         msg.text("");
         var d = $scope.selectedDomainAccount;
+        //d.ntaccount = d.ntaccount.trim();
         var tmp = {};
         tmp.EmployeeID = d.Race;
         tmp.EmployeeCode = d.Emp_Code;
@@ -1321,6 +1424,7 @@ myApp.controller("myCtrl", function($scope, $http) {
             msg.text("change Domain Account incompleted");
             return;
         }
+        $scope.DomainAccount = $scope.DomainAccount.trim();
         SPHelper.saveToSP(listName, !$scope.isNew, function() {
             msg.text("saved");
             backToSPListPage();
@@ -1335,13 +1439,20 @@ myApp.controller("myCtrl", function($scope, $http) {
         checkAndSaveToSP();
         return false;
     };
+    function getUpdateSql() {
+      var condition = $scope.RequestPermission.replace(/'/g, "''");
+      $scope.SQL = "update [SAPBW3Production].[spp].[vUsersLine]"
+                  +" set Condition='"+condition+"'"
+                  +" where UserName='"+$scope.Email+"'";
+    }
     $scope.openPermissionEditor = function() {
         if (!$scope.myPermissionFormUrl) {
             $scope.myPermissionFormUrl = myPermissionFormUrl;
             $scope.myPermissionFormReady = function() {
-                myPermissionHelper.save = function(Permission, JSONStr) {
-                    $scope.Permission = Permission;
+                myPermissionHelper.save = function(RequestPermission, JSONStr) {
+                    $scope.RequestPermission = RequestPermission;
                     $scope.JSONStr = JSONStr;
+                    getUpdateSql();
                 };
                 myPermissionHelper.close = function() {
                     $scope.showPermission = false;
@@ -1350,7 +1461,7 @@ myApp.controller("myCtrl", function($scope, $http) {
             };
         } else {
             $scope.showPermission = !$scope.showPermission;
-            myPermissionHelper.load($scope.BG, $scope.Permission, $scope.JSONStr);
+            myPermissionHelper.load($scope.BG, $scope.RequestPermission, $scope.JSONStr);
         }
     };
 });
@@ -1380,6 +1491,7 @@ var SPPFieldsConfig = {
     },
     RequestPermission: {},
     EffectivePermission: {},
+    JSONStr: {},
     TerminateDate: {},
     Status: {},
     Office: {},
