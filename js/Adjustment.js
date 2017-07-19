@@ -155,10 +155,22 @@ myApp.controller("myCtrl", function($scope, $http) {
     function loadFromUrl() {
         var sales = myUtility.getParam("s");
         var customer = myUtility.getParam("c");
+        var customerList = customer.split(",");
+        customer = "";
+        while (customerList.length>0){
+          if (customer) {
+            customer += " or EndCustomer eq '"+customerList.pop()+"'"
+          } else {
+            customer = "EndCustomer eq '"+customerList.pop()+"'"
+          }
+        }
+        if (customer) {
+          customer = "("+customer+")";
+        }
         if (!sales || !customer) {
             return;
         }
-        var url = vSalesCustomerUrl + "?$filter=SalesPerson eq '" + sales + "' and EndCustomer eq '" + customer + "'";
+        var url = vSalesCustomerUrl + "?$filter=SalesPerson eq '" + sales + "' and " + customer;
         if ($scope.notAdmin) {
             url = url + " and BG eq '" + $scope.BG + "' and Company eq '" + $scope.Company + "'"
         }
@@ -169,6 +181,9 @@ myApp.controller("myCtrl", function($scope, $http) {
             $scope.loadOption();
             $scope.SalesPerson = d.SalesPerson;
             $scope.EndCustomer = [d.EndCustomer];
+            for (var i=1;i<result.d.length;i++){
+              $scope.EndCustomer.push(result.d[i].EndCustomer);
+            }
         }, function myError() {
             console.log("url not match");
         });
@@ -261,16 +276,16 @@ myApp.controller("myCtrl", function($scope, $http) {
         }
         $scope.status = "loading";
         var condition = "Year='" + $scope.Year + "'&BG='" + $scope.BG + "'&Company='" + $scope.Company + "'";
-        if ($scope.SalesPerson != "") {
+        if ($scope.SalesPerson) {
             condition += "&SalesPerson='" + $scope.SalesPerson + "'";
         }
-        if ($scope.EndCustomer != "") {
+        if ($scope.EndCustomer) {
             condition += "&EndCustomer='" + $scope.EndCustomer + "'";
         }
-        if ($scope.Material != "") {
+        if ($scope.Material) {
             condition += "&Material='" + $scope.Material + "'";
         }
-        if ($scope.ProfitCenter != "") {
+        if ($scope.ProfitCenter) {
             condition += "&ProfitCenter='" + $scope.ProfitCenter + "'";
         }
         $scope.status = "loading:" + condition;

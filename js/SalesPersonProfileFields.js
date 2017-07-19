@@ -28,12 +28,15 @@ var SPPFieldsConfig = {
     Office: {},
     PortalSalesRole: {},
     ApplySAPAccount: {},
+    ApplySAPLoginAccount: {},
+    ApplyBPMAccount: {},
     SalesOrg: {
         ngFieldType: "array",
     },
     Division: {
         ngFieldType: "array",
     },
+    Memo: {},
 };
 
 module.exports = SPPFieldsConfig;

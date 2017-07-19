@@ -10,6 +10,11 @@ myUtility.getParam = function(paramName) {
         return "";
     }
     var j = url.indexOf("&", i + 1);
+    var k = url.indexOf("=", j + 1);
+    if (k < 0) {//TODO: use regular expression replace this
+      j = -1;
+    }
+
     i = i + paramName.length;
     var param;
     if (j > 0) {
@@ -33,6 +38,7 @@ myUtility.formatSPSourceUrl = function(url) {
     url = url.replace(/%26/g, "&");
     url = url.replace(/%7B/g, "{");
     url = url.replace(/%7D/g, "}");
+    url = url.replace(/%25/g, "%");
     return url;
 };
 

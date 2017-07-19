@@ -31,7 +31,7 @@ myApp.controller("myPreCtrl", function($scope) {
 myApp.controller("myPermissionCtrl", myPermissionCtrl);
 myApp.controller("myCtrl", function($scope, $http) {
     $scope.notAdmin = true;
-    $scope.isReadOnly = false;
+    $scope.isReadOnly = true;
     $scope.isNew = $("#myFormType").text() == "new" ? true : false;
     var msg = $("#msg");
     var HttpGet = myUtility.buildHttpGet($http, myError);
@@ -180,7 +180,7 @@ myApp.controller("myCtrl", function($scope, $http) {
             return;
         }
         if (!callByLoad) {
-            if ($scope.SalesOrg.toString() == lastSalesOrg && $scope.Divisions) {
+            if ($scope.SalesOrg.toString() == lastSalesOrg && $scope.Divisions != null && $scope.Divisions.length > 0) {
                 return;
             }
             if (lastSalesOrg && $scope.SalesOrg.toString() != lastSalesOrg) {
@@ -227,6 +227,7 @@ myApp.controller("myCtrl", function($scope, $http) {
     });
     $("#btCancel").click(function() {
         //$("[value='Cancel']:first").click();
+        //msg.text(myUtility.formatSPSourceUrl(myUtility.getParam("Source")));
         backToSPListPage();
     });
 
@@ -236,6 +237,18 @@ myApp.controller("myCtrl", function($scope, $http) {
             return;
         }
         $scope.DomainAccount = $scope.DomainAccount.trim();
+        if (!$scope.SalesOrg || !$scope.Division || !$scope.SalesOrg.length || !$scope.Division.length) {
+          msg.text("Sales Org and Division are required");
+          if ($scope.notAdmin) {
+              return;
+          }
+        }
+        if (!$scope.Memo) {
+          msg.text("Memo is required");
+          if ($scope.notAdmin) {
+              return;
+          }
+        }
         SPHelper.saveToSP(listName, !$scope.isNew, function() {
             msg.text("saved");
             backToSPListPage();

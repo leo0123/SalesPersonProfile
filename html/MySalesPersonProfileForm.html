@@ -45,15 +45,15 @@
 			<td>SalesP</td>
 			<td><input ng-model="SalesP" ng-readonly="isReadOnly"/></td>
 		</tr>
-		<tr>
+		<tr ng-show="!isNew">
 			<td>Old Email</td>
 			<td><textarea ng-model="OldEmail" ng-readonly="notAdmin" style="width:250px;"></textarea></td>
 		</tr>
-		<tr>
+		<tr ng-show="!isNew">
 			<td>Old SAP ID</td>
 			<td><textarea ng-model="OldSAPID" ng-readonly="notAdmin" style="width:250px;"></textarea></td>
 		</tr>
-		<tr>
+		<tr ng-show="!isNew">
 			<td>Other Account</td>
 			<td><textarea ng-model="OtherAccount" ng-readonly="notAdmin" style="width:250px;"></textarea></td>
 		</tr>
@@ -72,8 +72,12 @@
 			</td>
 		</tr>
 		<tr>
-			<td>Apply SAP Account</td>
-			<td><md-checkbox ng-model="ApplySAPAccount"></md-checkbox></td>
+			<td>Apply SAP Login Account</td>
+			<td><md-checkbox ng-model="ApplySAPLoginAccount"></md-checkbox></td>
+		</tr>
+		<tr>
+			<td style="width:150px">Apply BPM Account (customer code approval,SO approval,etc)</td>
+			<td><md-checkbox ng-model="ApplyBPMAccount"></md-checkbox></td>
 		</tr>
 		<tr>
 			<td>Sales Org</td>
@@ -96,8 +100,12 @@
 			</td>
 		</tr>
 		<tr>
+			<td style="width:150px">Memo (sales revenue scope)</td>
+			<td><textarea ng-model="Memo" style="width:250px;"></textarea></td>
+		</tr>
+		<tr>
 			<td>
-					Request Permission
+					Request Sales Revenue Permission
 					<input type="button" value="Edit Permission" ng-click="openPermissionEditor()" class="ms-ButtonHeightWidth" target="_self"/>
 			</td>
 			<td>

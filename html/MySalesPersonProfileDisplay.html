@@ -2,20 +2,30 @@
 	<input type="button" value="{{btName}}" ng-click="showSalesCustomer()" class="ms-ButtonHeightWidth" target="_self" />
 	<div style="background:lightblue;" ng-show="showResults">
 		<div style="color:blue;">{{status}}</div>
+		<input ng-init="anyCustomerSelected=false" ng-show="anyCustomerSelected" type="button" value="adjust selected"
+		ng-click="adjustSelected()" class="ms-ButtonHeightWidth" target="_self"></input>
 		<table border="0">
 			<tr>
+				<td><input type="checkbox"
+										ng-init="allCustomerSelected=false"
+										ng-checked="allCustomerSelected"
+										ng-click="toggleSelectAllCustomer()"/></td>
 				<td>EndCustomer</td>
 				<td>Actual/Budget</td>
 				<td>SalesType</td>
-				<td>Year</td>
+				<td ng-dbclick="orderField='-Year'" ng-click="showYearFilter=true">Year
+				<input ng-show="showYearFilter" ng-change="filterYear()" ng-model="yearFilter"></td>
 				<td></td>
 			</tr>
-			<tr ng-repeat="x in Customers">
+			<tr ng-repeat="x in (filteredCustomers = (Customers | orderBy: orderField | filter: filterCondition))">
+				<td><input type="checkbox"
+										ng-checked="x.selected"
+										ng-click="toggleSelectCustomer(x)"/></td>
 				<td>{{x.EndCustomer}}</td>
 				<td>{{x.Source}}</td>
 				<td>{{x.SalesType}}</td>
 				<td>{{x.Year}}</td>
-				<td><a target="_blank" href="{{adjustUrl}}?c={{x.EndCustomer}}{{params}}">adjust</a></td>
+				<td><a target="_blank" href="{{adjustUrl}}?{{params}}&c={{x.EndCustomer}}">adjust</a></td>
 			</tr>
 		</table>
 	</div>
