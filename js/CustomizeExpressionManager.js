@@ -110,8 +110,9 @@ function CustomizeExpressionManager() {
       expR.tryRemoveSelf();
       return expSR;
     }
-    expSR = new CustomizeExpression("SuperRoot");
-    expSR.IsGroup = true;
+    expSR = new CustomizeExpression();
+    expSR.setGroup(true, "SuperRoot");
+    //expSR.changeGroupLogic();
     expSR.addChild(expR);
     expR.tryRemoveSelf();
     var expBG = new CustomizeExpression();

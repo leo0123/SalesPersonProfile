@@ -3,11 +3,11 @@ var Expression = require("./Expression.js");
 function CustomizeExpression(field) {
 	Expression.call(this);
 
-	this.setGroup();
-	this.Field = field;
+	this.setGroup(null, field);
+	//this.Field = field;
 	//this.GroupLogic = " and ";
 
-	var currentChild = null;
+	/*var currentChild = null;
 
 	this.getChildGroup = function (field) {
 		if (currentChild != null && currentChild.Field == field) {
@@ -30,11 +30,11 @@ function CustomizeExpression(field) {
 		this.addChild(childGroup);
 		currentChild = childGroup;
 		return childGroup;
-	}
+	}*/
 }
 
 CustomizeExpression.prototype = Object.create(Expression.prototype);
 
 CustomizeExpression.prototype.constructor = CustomizeExpression;
 
-module.exports=CustomizeExpression;
+module.exports = CustomizeExpression;

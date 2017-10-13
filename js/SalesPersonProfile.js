@@ -32,6 +32,7 @@ myApp.controller("myPermissionCtrl", myPermissionCtrl);
 myApp.controller("myCtrl", function($scope, $http) {
     $scope.notAdmin = true;
     $scope.isReadOnly = false;
+    $scope.noBG = true;
     $scope.isNew = $("#myFormType").text() == "new" ? true : false;
     var msg = $("#msg");
     var HttpGet = myUtility.buildHttpGet($http, myError);
@@ -109,6 +110,9 @@ myApp.controller("myCtrl", function($scope, $http) {
         tmp.BG = d.UserProfileProperties.results.find(function(prop) {
             return prop.Key == "Department";
         }).Value;
+        if (tmp.BG) {
+          $scope.noBG = false;
+        }
         tmp.Company = d.UserProfileProperties.results.find(function(prop) {
             return prop.Key == "Company";
         }).Value;

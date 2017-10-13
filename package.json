@@ -5,6 +5,10 @@
     "repository": "https://github.com/leo0123/SalesPersonProfileSolutionV1.git",
     "author": "Leo <leo.c.chen@deltaww.com>",
     "license": "MIT",
+    "scripts": {
+        "test": "webpack-dev-server",
+        "build": "webpack"
+    },
     "dependencies": {
         "angular": "^1.6.1",
         "angular-animate": "^1.6.1",
@@ -15,5 +19,9 @@
     "style": [
         "./node_modules/angular-material/angular-material.css",
         "./css/my.css"
-    ]
+    ],
+    "devDependencies": {
+        "webpack": "^3.6.0",
+        "webpack-dev-server": "^2.9.1"
+    }
 }

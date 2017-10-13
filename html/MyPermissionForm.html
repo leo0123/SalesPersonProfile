@@ -15,7 +15,7 @@
 					</md-input-container>
 				<md-button ng-click="nextTab()">next</md-button>
 			</md-tab>-->
-			<md-tab label="DomainAccount" md-on-select="delayLoadOption('DomainAccount')">
+			<md-tab label="Sales Person" md-on-select="delayLoadOption('DomainAccount')">
 				<md-input-container>
 					<md-select ng-model="selectedDomainAccount" ng-change="selectedChanged(OptionManager.TypeList.DomainAccount)" multiple placeholder="Select DomainAccount">
 						<md-option ng-value="item.Value" ng-repeat="item in DomainAccountOptions">{{item.Value}}</md-option>
@@ -30,28 +30,6 @@
 									ng-keydown="onSearchChange($event)" />
 						</md-select-header>
 						<md-option ng-value="item.Value" ng-repeat="item in ProfitCenterOptions | filter:inputProfitCenter">{{item.Value}}</md-option>
-					</md-select>
-				</md-input-container>
-			</md-tab>
-			<md-tab label="Office" md-on-select="delayLoadOption('Office')">
-				<md-input-container>
-					<md-select ng-model="selectedOffice" ng-change="selectedChanged(OptionManager.TypeList.Office)" multiple placeholder="Select Office">
-						<md-option ng-value="item.Value" ng-repeat="item in OfficeOptions">{{item.Value}}</md-option>
-					</md-select>
-				</md-input-container>
-
-			</md-tab>
-			<md-tab label="SalesOffice" md-on-select="delayLoadOption('SalesOffice')">
-				<md-input-container>
-					<md-select ng-model="selectedSalesOffice" ng-change="selectedChanged(OptionManager.TypeList.SalesOffice)" multiple placeholder="Select SalesOffice">
-						<md-option ng-value="item.Value" ng-repeat="item in SalesOfficeOptions">{{item.Value}}</md-option>
-					</md-select>
-				</md-input-container>
-			</md-tab>
-			<md-tab label="SalesType" md-on-select="delayLoadOption('SalesType')">
-				<md-input-container>
-					<md-select ng-model="selectedSalesType" ng-change="selectedChanged(OptionManager.TypeList.SalesType)" multiple placeholder="Select SalesType">
-						<md-option ng-value="item.Value" ng-repeat="item in SalesTypeOptions">{{item.Value}}</md-option>
 					</md-select>
 				</md-input-container>
 			</md-tab>
@@ -76,6 +54,27 @@
 									ng-keydown="onSearchChange($event)" />
 						</md-select-header>
 						<md-option ng-value="item.Value" ng-repeat="item in SoldToCustomerOptions | filter:inputSoldToCustomer">{{item.Value}}</md-option>
+					</md-select>
+				</md-input-container>
+			</md-tab>
+			<md-tab label="SalesType" md-on-select="delayLoadOption('SalesType')">
+				<md-input-container>
+					<md-select ng-model="selectedSalesType" ng-change="selectedChanged(OptionManager.TypeList.SalesType)" multiple placeholder="Select SalesType">
+						<md-option ng-value="item.Value" ng-repeat="item in SalesTypeOptions">{{item.Value}}</md-option>
+					</md-select>
+				</md-input-container>
+			</md-tab>
+			<md-tab label="SalesOffice" md-on-select="delayLoadOption('SalesOffice')">
+				<md-input-container>
+					<md-select ng-model="selectedSalesOffice" ng-change="selectedChanged(OptionManager.TypeList.SalesOffice)" multiple placeholder="Select SalesOffice">
+						<md-option ng-value="item.Value" ng-repeat="item in SalesOfficeOptions">{{item.Value}}</md-option>
+					</md-select>
+				</md-input-container>
+			</md-tab>
+			<md-tab label="Office" md-on-select="delayLoadOption('Office')">
+				<md-input-container>
+					<md-select ng-model="selectedOffice" ng-change="selectedChanged(OptionManager.TypeList.Office)" multiple placeholder="Select Office">
+						<md-option ng-value="item.Value" ng-repeat="item in OfficeOptions">{{item.Value}}</md-option>
 					</md-select>
 				</md-input-container>
 			</md-tab>

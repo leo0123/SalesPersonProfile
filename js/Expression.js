@@ -19,6 +19,8 @@ function Expression() {
   this.GroupLogic = " or ";
   this.Children = [];
   //GROUP
+
+  this.currentChild = null;
 };
 
 //Expression.prototype.getParent = function () {
@@ -29,10 +31,16 @@ function Expression() {
 //};
 
 //GROUP
-Expression.prototype.setGroup = function() {
+Expression.prototype.setGroup = function(isAnd, groupName) {
   this.GroupLogic = " or ";
+  if (isAnd) {
+    this.GroupLogic = " and ";
+  }
   this.IsGroup = true;
   this.Field = null;
+  if (groupName) {
+      this.Field = groupName;
+  }
   this.Value = null;
   this.Operation = null;
   this.Children = [];
@@ -173,5 +181,29 @@ Expression.prototype.tryRemoveSelf = function() {
     return;
   }
 };
+
+Expression.prototype.getChildGroup = function (field) {
+  if (this.currentChild != null && this.currentChild.Field == field) {
+    return this.currentChild;
+  }
+  if (this.Field == 'root') {
+    for (var i = 0; i < this.Children.length; i++) {
+      var child = this.Children[i];
+      if (child.IsGroup == true && child.Field == field) {
+        this.currentChild = child;
+        return child;
+      }
+    }
+  }
+  return null;
+}
+
+Expression.prototype.createChildGroup = function (field) {
+  var childGroup = new Expression();
+  childGroup.setGroup(null, field);
+  this.addChild(childGroup);
+  this.currentChild = childGroup;
+  return childGroup;
+}
 
 module.exports = Expression;

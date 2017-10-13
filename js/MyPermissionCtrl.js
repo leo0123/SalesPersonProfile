@@ -104,6 +104,7 @@ myPermissionCtrl = function($scope, $http, $location) {
     //spJSONStr.val(angular.toJson(expM.getRoot()));
     //spPermission.val(expM.getRoot().ToString());
     //TODO default add BG
+    var superRoot = expM.getSuperRoot(BG);
     myPermissionHelper.save(expM.getSuperRoot(BG).ToString(), angular.toJson(expM.getSuperRoot(BG)));
     //$("#permissionEditor").hide();
     //$scope.$parent.$parent.showPermission = false;

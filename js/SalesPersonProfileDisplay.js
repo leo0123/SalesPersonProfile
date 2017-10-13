@@ -85,6 +85,7 @@ myApp.controller("myCtrl", function($scope, $http) {
           list.push(e.EndCustomer);
         }
       });
+      sessionStorage.setItem('selectedEndCustomers',JSON.stringify(list));
       var url = adjustUrl + "?" + $scope.params + "&c=" + list.toString();
       if (url.length>2083) {
         alert("too many customer");
