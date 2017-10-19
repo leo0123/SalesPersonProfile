@@ -31,7 +31,7 @@ myApp.controller("myPreCtrl", function($scope) {
 myApp.controller("myPermissionCtrl", myPermissionCtrl);
 myApp.controller("myCtrl", function($scope, $http) {
     $scope.notAdmin = true;
-    $scope.isReadOnly = false;
+    $scope.isReadOnly = true;
     $scope.noBG = true;
     $scope.isNew = $("#myFormType").text() == "new" ? true : false;
     var msg = $("#msg");
@@ -53,7 +53,10 @@ myApp.controller("myCtrl", function($scope, $http) {
             }).Value;
             if (Department == "IT") {
                 $scope.notAdmin = false;
+            } else {
+              DomainAccountUrl += " and Department eq '"+Department+"'";
             }
+            init();
         });
     };
 
@@ -127,6 +130,7 @@ myApp.controller("myCtrl", function($scope, $http) {
             clearDivision();
         }
         $scope.DomainAccount = $scope.selectedDomainAccount.ntaccount;
+        $scope.RequestPermissionFull = "(DomainAccount='" + $scope.DomainAccount + "')"
         $scope.loadSalesOrg(false);
     };
 
@@ -225,7 +229,7 @@ myApp.controller("myCtrl", function($scope, $http) {
         return tList;
     };
 
-    init();
+    //init();
     $("#btSave").click(function() {
         checkAndSaveToSP();
     });
@@ -239,6 +243,14 @@ myApp.controller("myCtrl", function($scope, $http) {
             msg.text("change Domain Account incompleted");
             return;
         }
+        if (!$scope.SalesOrg || !$scope.Division || !$scope.Memo || !$scope.SalesOrg.length || !$scope.Division.length) {
+          let text = "";
+          text += !$scope.SalesOrg || !$scope.SalesOrg.length?"SalesOrg ":"";
+          text += !$scope.Division || !$scope.Division.length?"Division ":"";
+          text += $scope.Memo?"":"Memo ";
+          msg.text(text + " cannot be empty");
+          return;
+        }
         $scope.DomainAccount = $scope.DomainAccount.trim();
         SPHelper.saveToSP(listName, !$scope.isNew, function() {
             msg.text("saved");
@@ -247,7 +259,8 @@ myApp.controller("myCtrl", function($scope, $http) {
     };
 
     function backToSPListPage() {
-        STSNavigate(myUtility.formatSPSourceUrl(myUtility.getParam("Source")));
+        STSNavigate(decodeURIComponent(myUtility.getParam("Source")));
+        //msg.text(decodeURIComponent(myUtility.getParam("Source")));
     };
     PreSaveAction = function() {
         //TODO check exist
@@ -266,6 +279,7 @@ myApp.controller("myCtrl", function($scope, $http) {
             $scope.myPermissionFormReady = function() {
                 myPermissionHelper.save = function(RequestPermission, JSONStr) {
                     $scope.RequestPermission = RequestPermission;
+                    $scope.RequestPermissionFull = RequestPermission + " or (DomainAccount='" + $scope.DomainAccount + "')"
                     $scope.JSONStr = JSONStr;
                     getUpdateSql();
                 };

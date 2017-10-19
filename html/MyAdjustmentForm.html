@@ -24,7 +24,7 @@
 			<td>
 				<md-input-container>
 					<md-select ng-model="SalesPerson">
-						<md-option md-option-empty></md-option>
+						<md-option md-option-empty value="">[All]</md-option>
 						<md-option ng-value="item.DomainAccount" ng-repeat="item in SalesPersons">{{item.DomainAccount}}</md-option>
 					</md-select>
 				</md-input-container>'{{SalesPerson}}'

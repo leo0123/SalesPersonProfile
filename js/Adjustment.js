@@ -155,6 +155,9 @@ myApp.controller("myCtrl", function($scope, $http) {
     function loadFromUrl() {
         var sales = myUtility.getParam("s");
         var customer = myUtility.getParam("c");
+        if (!sales || !customer) {
+          return;
+        }
         var customerList = customer.split(",");
         customer = "";
         while (customerList.length>0){
@@ -251,7 +254,7 @@ myApp.controller("myCtrl", function($scope, $http) {
     };
 
     function backToSPListPage() {
-        STSNavigate(myUtility.formatSPSourceUrl(myUtility.getParam("Source")));
+        STSNavigate(decodeURIComponent(myUtility.getParam("Source")));
     };
 
     PreSaveAction = function() {

@@ -1,11 +1,11 @@
 ﻿
-var dataService = "http://amdpfweb02:9999/SAPBW3DataService.svc/";
+var dataService = "http://amdpfweb02.delta-corp.com:9999/SAPBW3DataService.svc/";
 var dataUrlNewNtAccount = dataService + "vSalesAccount4LoadProfile";
 var dataUrlHr = dataService + "vSalesHrInfo4LoadProfile?$filter=EmployeeCode eq ''";
 var dataUrlOldAccount = dataService + "vEmployee_Account4LoadProfile?$orderby=ID&$filter=OldSAPID eq '' and OldEmail eq '' and OtherAccount eq ''";
 var dataUrlUsersLine = dataService + "vUsersLine4LoadProfile";
 var dataUrlSalesOrgDivision = dataService + "vSalesOrgDivision4LoadProfile?$orderby=ID";
-var listServer = "http://sp2013portal.delta-corp.com/sites/MyDelta/";
+var listServer = "http://ideltaam.deltaww.com/sites/MyDelta/";
 var digestUrl = listServer + "_api/contextinfo";
 var listUrl = listServer + "_api/web/lists/getbytitle('Sales Person Profile')/items";
 var SPUserProfileUrl = listServer + "_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)?@v=" //'delta\username'
@@ -31,8 +31,8 @@ $(function() {
     //type = "NTAccount";
     //type = "HR";
     //type = "OldAccount";
-    //type = "ADInfo";
-    type = "usersline";
+    type = "ADInfo";
+    //type = "usersline";
     switch (type) {
         case "NTAccount":
             url4GetData = dataUrlNewNtAccount;

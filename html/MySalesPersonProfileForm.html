@@ -96,12 +96,16 @@
 			</td>
 		</tr>
 		<tr>
+			<td>Memo(reason for application)</td>
+			<td><input ng-model="Memo"/></td>
+		</tr>
+		<tr>
 			<td>
 					Request Permission
 					<input ng-disabled="noBG" type="button" value="Edit Permission" ng-click="openPermissionEditor()" class="ms-ButtonHeightWidth" target="_self"/>
 			</td>
 			<td>
-					<md-content>{{RequestPermission}}</md-content>
+					<md-content>{{RequestPermissionFull}}</md-content>
 					<div ng-show="showPermission" ng-init="showPermission=false" style="position:relative;" ng-include="myPermissionFormUrl"  onload="myPermissionFormReady()"></div>
 			</td>
 		</tr>
@@ -113,15 +117,15 @@
 			<td>&nbsp;</td>
 			<td>&nbsp;</td>
 		</tr>
-		<tr>
+		<tr ng-hide="isReadOnly">
 			<td>JSON</td>
 			<td>{{JSONStr}}</td>
 		</tr>
-		<tr>
+		<tr ng-hide="isReadOnly">
 			<td>&nbsp;</td>
 			<td>&nbsp;</td>
 		</tr>
-		<tr>
+		<tr ng-hide="isReadOnly">
 			<td>SQL</td>
 			<td>{{SQL}}</td>
 		</tr>

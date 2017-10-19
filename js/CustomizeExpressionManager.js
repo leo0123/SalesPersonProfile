@@ -116,7 +116,7 @@ function CustomizeExpressionManager() {
     expSR.addChild(expR);
     expR.tryRemoveSelf();
     var expBG = new CustomizeExpression();
-    expBG.setFieldValue("BG", BG);
+    expBG.setFieldValue("BG", "'" + BG + "'");
     expSR.addChild(expBG);
     return expSR;
   };

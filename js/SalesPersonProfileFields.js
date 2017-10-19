@@ -26,6 +26,7 @@ var SPPFieldsConfig = {
     TerminateDate: {},
     Status: {},
     Office: {},
+    Memo: {},
     PortalSalesRole: {},
     ApplySAPAccount: {},
     SalesOrg: {

@@ -1,9 +1,17 @@
 var myUtility = {};
 
 myUtility.getParam = function(paramName) {
-    var url = window.location.href;
-    var startIndex = url.indexOf("?");
-    url = "&" + url.substring(startIndex + 1);
+  var queryStrings = window.location.search.substring(1).split("&");
+  var param;
+  queryStrings.forEach(function(queryString) {
+      var keyValue = queryString.split("=");
+      if (keyValue[0] == paramName) {
+        param = keyValue[1];
+      }
+  });
+  return param;
+    /*var url = window.location.search;
+    url = "&" + url.substring(1);
     paramName = "&" + paramName + "=";
     var i = url.indexOf(paramName, 0);
     if (i < 0) {
@@ -25,10 +33,10 @@ myUtility.getParam = function(paramName) {
     while (param.includes("%20")) {
         param = param.replace("%20", " ");
     };
-    return param;
+    return param;*/
 };
 myUtility.formatSPSourceUrl = function(url) {
-    url = url.replace(/%3A/g, ":");
+    /*url = url.replace(/%3A/g, ":");
     url = url.replace(/%2F/g, "/");
     url = url.replace(/%2E/g, ".");
     url = url.replace(/%2D/g, "-");
@@ -37,8 +45,8 @@ myUtility.formatSPSourceUrl = function(url) {
     url = url.replace(/%3D/g, "=");
     url = url.replace(/%26/g, "&");
     url = url.replace(/%7B/g, "{");
-    url = url.replace(/%7D/g, "}");
-    return url;
+    url = url.replace(/%7D/g, "}");*/
+    return decodeURIComponent(url);
 };
 
 var headers = {
