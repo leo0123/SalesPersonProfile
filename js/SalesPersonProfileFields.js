@@ -26,15 +26,17 @@ var SPPFieldsConfig = {
     TerminateDate: {},
     Status: {},
     Office: {},
-    Memo: {},
     PortalSalesRole: {},
-    ApplySAPAccount: {},
+    //ApplySAPAccount: {},
+    ApplySAPLoginAccount: {},
+    ApplyBPMAccount: {},
     SalesOrg: {
         ngFieldType: "array",
     },
     Division: {
         ngFieldType: "array",
     },
+    Memo: {},
 };
 
 module.exports = SPPFieldsConfig;

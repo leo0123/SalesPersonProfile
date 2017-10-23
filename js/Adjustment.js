@@ -170,9 +170,6 @@ myApp.controller("myCtrl", function($scope, $http) {
         if (customer) {
           customer = "("+customer+")";
         }
-        if (!sales || !customer) {
-            return;
-        }
         var url = vSalesCustomerUrl + "?$filter=SalesPerson eq '" + sales + "' and " + customer;
         if ($scope.notAdmin) {
             url = url + " and BG eq '" + $scope.BG + "' and Company eq '" + $scope.Company + "'"

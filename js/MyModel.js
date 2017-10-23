@@ -103,6 +103,10 @@ myPermissionModel.OptionManager = function () {
 			filter = "BG eq '" + theBG + "'";
 		} else if (type == self.TypeList.EndCustomer) {
 			filter = "BG eq '" + theBG + "'";
+		} else if (type == self.TypeList.DomainAccount) {
+			filter = "BG eq '" + theBG + "'";
+		} else if (type == self.TypeList.ProfitCenter) {
+			filter = "BG eq '" + theBG + "'";
 		} else if (type == self.TypeList.SoldToCustomer) {
 			//filter = "BG eq '" + theBG + "'";
 			filter = "";
