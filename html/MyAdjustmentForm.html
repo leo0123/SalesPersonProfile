@@ -1,9 +1,11 @@
 <div ng-controller="myCtrl">
 	<table cellspacing="0">
 		<tr>
-			<td colspan="2"><input type="button" value=" Save " id="btSave" class="ms-ButtonHeightWidth" target="_self" />
+			<td colspan="2">
+				<div style="color:red;">The changes will apply to actual and budget sales revenue for trading and design-in transactions</div>
+				<input type="button" value=" Save " id="btSave" class="ms-ButtonHeightWidth" target="_self" />
 				<input type="button" value=" Cancel " id="btCancel" class="ms-ButtonHeightWidth" target="_self" />
-				<md-input-container ng-show="notAdmin == false">
+				<md-input-container ng-show="1 == 0">
 					<md-select ng-model="SalesType" ng-init="SalesType='T'">
 						<md-option ng-value="value" ng-repeat="value in SalesTypes">{{value}}</md-option>
 					</md-select>

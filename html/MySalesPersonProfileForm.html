@@ -7,7 +7,7 @@
 			</td>
 		</tr>
 		<tr>
-			<td width="150px">Domain Account</td>
+			<td width="300px">Domain Account</td>
 			<td>
 				<md-input-container ng-show="isNew">
 					<md-select ng-model="selectedDomainAccount" ng-change="selectedDomainAccountChanged()" placeholder="Select DomainAccount">
@@ -18,7 +18,7 @@
 			</td>
 		</tr>
 		<tr>
-			<td width="150px">Name</td>
+			<td>Name</td>
 			<td><input ng-model="Name" ng-readonly="isReadOnly"/></td>
 		</tr>
 		<tr>
@@ -72,12 +72,20 @@
 			</td>
 		</tr>
 		<tr>
-			<td>Apply SAP Login Account</td>
-			<td><md-checkbox ng-model="ApplySAPLoginAccount"></md-checkbox></td>
+			<td>SAP Login Account</td>
+			<td><md-checkbox ng-model="ApplySAP"></md-checkbox></td>
 		</tr>
 		<tr>
-			<td style="width:150px">Apply BPM Account (customer code approval,SO approval,etc)</td>
-			<td><md-checkbox ng-model="ApplyBPMAccount"></md-checkbox></td>
+			<td>BPM (Customer Code Application System)</td>
+			<td><md-checkbox ng-model="ApplyBPM"></md-checkbox></td>
+		</tr>
+		<tr>
+			<td>SPR/CMS (Sales Performance / Commission)</td>
+			<td><md-checkbox ng-model="ApplySPRCMS"></md-checkbox></td>
+		</tr>
+		<tr>
+			<td>Transportation System</td>
+			<td><md-checkbox ng-model="ApplyTransportationSystem"></md-checkbox></td>
 		</tr>
 		<tr>
 			<td>Sales Org</td>

@@ -1,5 +1,5 @@
 $(function(){
-  //$("[Name='SPBookmark_Sold_x0020_To_x0020_Code']").parentsUntil("tr").parent().hide();
+  $("[Name='SPBookmark_SoldToCode']").parentsUntil("tr").parent().hide();
   $("[Name='SPBookmark_SalesType']").parentsUntil("tr").parent().hide();
   //$("[Name='SPBookmark_Year']").parentsUntil("tr").parent().hide();
   //$("[id=SPFieldText]").parent("tr:contains('Sold To Code')").hide();

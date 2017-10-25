@@ -27,9 +27,10 @@ var SPPFieldsConfig = {
     Status: {},
     Office: {},
     PortalSalesRole: {},
-    //ApplySAPAccount: {},
-    ApplySAPLoginAccount: {},
-    ApplyBPMAccount: {},
+    ApplySAP: {},
+    ApplyBPM: {},
+    ApplySPRCMS: {},
+    ApplyTransportationSystem: {},
     SalesOrg: {
         ngFieldType: "array",
     },
