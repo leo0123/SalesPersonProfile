@@ -1,8 +1,8 @@
 {
-    "name": "SalesPersonProfileSolutionV1",
+    "name": "SalesPersonProfile",
     "version": "1.0.0",
     "main": "index.js",
-    "repository": "https://github.com/leo0123/SalesPersonProfileSolutionV1.git",
+    "repository": "https://github.com/leo0123/SalesPersonProfile.git",
     "author": "Leo <leo.c.chen@deltaww.com>",
     "license": "MIT",
     "scripts": {
@@ -21,6 +21,9 @@
         "./css/my.css"
     ],
     "devDependencies": {
+        "babel-core": "^6.26.0",
+        "babel-loader": "^7.1.2",
+        "babel-preset-env": "^1.6.1",
         "webpack": "^3.6.0",
         "webpack-dev-server": "^2.9.1"
     }
