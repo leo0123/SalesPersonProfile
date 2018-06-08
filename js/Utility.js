@@ -163,7 +163,7 @@ function getFormDigestService(SPServer, success) {
         headers: headers,
     }).then(function(response) {
         var result = response.data;
-        digest = result.d.GetContextWebInformation.FormDigestValue;
+        var digest = result.d.GetContextWebInformation.FormDigestValue;
         if (success) {
             success(digest);
         }
@@ -180,7 +180,10 @@ function getFormDigestService(SPServer, success) {
         error: error,
     });
 };*/
-function HttpGet(url, success, error = defaultError) {
+function HttpGet(url, success, error) {
+    if (error == undefined) {
+      error = defaultError;
+    }
     ngHttp({
         url: url,
         method: "GET",

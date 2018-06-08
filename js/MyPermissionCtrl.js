@@ -10,7 +10,7 @@ var myPermissionHelper = mySalesPersonProfileConfig.myPermissionHelper;
 var serviceUrl = mySalesPersonProfileConfig.dataServiceUrl;
 
 //myPermissionApp.
-myPermissionCtrl = function($scope, $http, $location) {
+var myPermissionCtrl = function($scope, $http, $location) {
   //var log = myPermissionApp.log;
   var expM = new CustomizeExpressionManager();
   var currentExp;

@@ -22,6 +22,7 @@ var AdjustmentFieldsConfig = {
     BatchNumber: {},
     SalesType: {},
     ApprovalStatus: {},
+    SoldToCode: {},
 };
 
 module.exports = AdjustmentFieldsConfig;

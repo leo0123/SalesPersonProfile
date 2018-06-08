@@ -1,6 +1,6 @@
 var Expression=require("./Expression.js");
 
-ParseSqlHelper = function () {
+var ParseSqlHelper = function () {
 	var opEqual = "=";
 	var opLike = "like";
 	var opIn = "in";

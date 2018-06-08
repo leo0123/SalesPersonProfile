@@ -25,11 +25,12 @@ var DomainAccountUrl = dataServiceUrl + "vSalesPersonAccount4Profile/?$filter=nt
 var listName = "SalesPersonProfile";
 
 var myApp = angular.module('myApp', ['ngMaterial']);
-myApp.controller("myPreCtrl", function($scope) {
+myApp.controller("myPreCtrl", ["$scope" ,function($scope) {
     $scope.myFormUrl = myFormUrl;
-});
+}]);
 myApp.controller("myPermissionCtrl", myPermissionCtrl);
-myApp.controller("myCtrl", function($scope, $http) {
+
+myApp.controller("myCtrl", ["$scope", "$http", function($scope, $http) {
     $scope.notAdmin = true;
     $scope.isReadOnly = true;
     $scope.noBG = true;
@@ -68,6 +69,7 @@ myApp.controller("myCtrl", function($scope, $http) {
             SPHelper.loadFromSP(null, myError);
             $scope.loadSalesOrg(true);
             $scope.loadDivision(true);
+            $scope.noBG = false;
         }
     };
 
@@ -244,21 +246,18 @@ myApp.controller("myCtrl", function($scope, $http) {
             msg.text("change Domain Account incompleted");
             return;
         }
-        if (!$scope.SalesOrg || !$scope.Division || !$scope.Memo || !$scope.SalesOrg.length || !$scope.Division.length) {
-          let text = "";
-          text += !$scope.SalesOrg || !$scope.SalesOrg.length?"SalesOrg ":"";
-          text += !$scope.Division || !$scope.Division.length?"Division ":"";
-          text += $scope.Memo?"":"Memo ";
-          msg.text(text + " cannot be empty");
-          return;
-        }
         $scope.DomainAccount = $scope.DomainAccount.trim();
-        if (!$scope.Memo) {
-          msg.text("Memo is required");
-          if ($scope.notAdmin) {
-              return;
+        if ($scope.notAdmin) {
+          if (!$scope.SalesOrg || !$scope.Division || !$scope.Memo || !$scope.SalesOrg.length || !$scope.Division.length) {
+            let text = "";
+            text += !$scope.SalesOrg || !$scope.SalesOrg.length?"SalesOrg ":"";
+            text += !$scope.Division || !$scope.Division.length?"Division ":"";
+            text += $scope.Memo?"":"Memo ";
+            msg.text(text + " cannot be empty");
+            return;
           }
         }
+
         SPHelper.saveToSP(listName, !$scope.isNew, function() {
             msg.text("saved");
             backToSPListPage();
@@ -269,7 +268,7 @@ myApp.controller("myCtrl", function($scope, $http) {
         STSNavigate(decodeURIComponent(myUtility.getParam("Source")));
         //msg.text(decodeURIComponent(myUtility.getParam("Source")));
     };
-    PreSaveAction = function() {
+    window.PreSaveAction = function() {
         //TODO check exist
         checkAndSaveToSP();
         return false;
@@ -300,4 +299,4 @@ myApp.controller("myCtrl", function($scope, $http) {
             myPermissionHelper.load($scope.BG, $scope.RequestPermission, $scope.JSONStr);
         }
     };
-});
+}]);

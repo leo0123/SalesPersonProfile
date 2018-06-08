@@ -1,0 +1,208 @@
+<div ng-controller="myCtrl">
+	<table cellspacing="0">
+		<tr>
+			<td colspan="2">
+				<div style="color:red;">The changes will apply to actual and budget sales revenue for trading and design-in transactions</div>
+				<input type="button" value=" Save " id="btSave" class="ms-ButtonHeightWidth" target="_self" />
+				<input type="button" value=" Cancel " id="btCancel" class="ms-ButtonHeightWidth" target="_self" />
+				<md-input-container ng-show="1 == 0">
+					<md-select ng-model="SalesType" ng-init="SalesType='T'">
+						<md-option ng-value="value" ng-repeat="value in SalesTypes">{{value}}</md-option>
+					</md-select>
+				</md-input-container>
+				<div id="msg" style="color:red;"></div>
+			</td>
+		</tr>
+		<tr>
+			<td width="150px">BG</td>
+			<td><input ng-readonly="notAdmin" ng-model="BG" ng-change="loadOption()" ng-keydown="onSearchChange($event)" /></td>
+		</tr>
+		<tr>
+			<td width="150px">Company</td>
+			<td><input ng-readonly="notAdmin" ng-model="Company" ng-change="loadOption()" ng-keydown="onSearchChange($event)" /></td>
+		</tr>
+		<tr>
+			<td>Sales Person</td>
+			<td>
+				<md-input-container>
+					<md-select ng-model="SalesPerson">
+						<md-option md-option-empty value="">[All]</md-option>
+						<md-option ng-value="item.DomainAccount" ng-repeat="item in SalesPersons">{{item.DomainAccount}}</md-option>
+					</md-select>
+				</md-input-container>'{{SalesPerson}}'
+			</td>
+		</tr>
+		<tr>
+			<td>End Customer</td>
+			<td>
+				<md-input-container>
+					<md-select ng-model="EndCustomer" multiple placeholder="input to search">
+						<md-select-header>
+							<input ng-model="inputEndCustomer" ng-change="inputChanged('EndCustomer')" ng-keydown="onSearchChange($event)" />
+						</md-select-header>
+						<md-option ng-value="item.value" ng-repeat="item in EndCustomers | filter:inputEndCustomer">{{item.value}}</md-option>
+					</md-select>
+				</md-input-container>{{EndCustomer}}
+			</td>
+		</tr>
+		<tr>
+			<td>Material</td>
+			<td>
+				<md-input-container>
+					<md-select ng-model="Material" multiple placeholder="input to search">
+						<md-select-header>
+							<input ng-model="inputMaterial" ng-change="inputChanged('Material')" ng-keydown="onSearchChange($event)" />
+						</md-select-header>
+						<md-option ng-value="item.value" ng-repeat="item in Materials | filter:inputMaterial">{{item.value}}</md-option>
+					</md-select>
+				</md-input-container>{{Material}}
+			</td>
+		</tr>
+		<tr>
+			<td>Profit Center</td>
+			<td>
+				<md-input-container>
+					<md-select ng-model="ProfitCenter" multiple placeholder="input to search">
+						<md-select-header>
+							<input ng-model="inputProfitCenter" ng-change="inputChanged('ProfitCenter')" ng-keydown="onSearchChange($event)" />
+						</md-select-header>
+						<md-option ng-value="item.value" ng-repeat="item in ProfitCenters | filter:inputProfitCenter">{{item.value}}</md-option>
+					</md-select>
+				</md-input-container>{{ProfitCenter}}
+			</td>
+		</tr>
+		<tr>
+			<td width="150px">Sold To Code</td>
+			<td><textarea ng-model="SoldToCode"></textarea></td>
+		</tr>
+		<tr>
+			<td colspan="2">Year:
+				<md-input-container>
+					<md-select ng-model="Year" ng-change="YearMonthChanged()">
+						<md-option ng-value="2018">2018</md-option>
+						<md-option ng-value="2017">2017</md-option>
+						<md-option ng-value="2016">2016</md-option>
+						<md-option ng-value="2015">2015</md-option>
+						<md-option ng-value="2014">2014</md-option>
+						<md-option ng-value="2013">2013</md-option>
+					</md-select>
+				</md-input-container>
+				<input type="button" value="search" ng-click="searchActualBudget()" class="ms-ButtonHeightWidth" target="_self" />
+		</tr>
+		<tr>
+			<td>New Sales Person</td>
+			<td>
+				<md-input-container>
+					<md-select ng-model="NewSalesPerson">
+						<md-option md-option-empty></md-option>
+						<md-option ng-value="item.DomainAccount" ng-repeat="item in SalesPersons">{{item.DomainAccount}}</md-option>
+					</md-select>
+				</md-input-container>'{{NewSalesPerson}}'
+			</td>
+		</tr>
+		<tr>
+			<td>New End Customer</td>
+			<td>
+				<md-input-container>
+					<md-select ng-model="NewEndCustomer" placeholder="input to search">
+						<md-select-header>
+							<input ng-model="inputNewEndCustomer" ng-change="inputChanged('NewEndCustomer')" ng-keydown="onSearchChange($event)" />
+						</md-select-header>
+						<md-option md-option-empty></md-option>
+						<md-option ng-value="item.value" ng-repeat="item in NewEndCustomers | filter:inputNewEndCustomer">{{item.value}}</md-option>
+					</md-select>
+				</md-input-container>'{{NewEndCustomer}}'
+			</td>
+		</tr>
+		<tr>
+			<td>New Material</td>
+			<td>
+				<md-input-container>
+					<md-select ng-model="NewMaterial" placeholder="input to search">
+						<md-select-header>
+							<input ng-model="inputNewMaterial" ng-change="inputChanged('NewMaterial')" ng-keydown="onSearchChange($event)" />
+						</md-select-header>
+						<md-option md-option-empty></md-option>
+						<md-option ng-value="item.value" ng-repeat="item in NewMaterials | filter:inputNewMaterial">{{item.value}}</md-option>
+					</md-select>
+				</md-input-container>'{{NewMaterial}}'
+			</td>
+		</tr>
+		<tr>
+			<td>Effective Year Month</td>
+			<td>
+				<md-input-container>
+					<md-select ng-model="Month" ng-change="YearMonthChanged()">
+						<md-option value="01">{{Year}}01</md-option>
+						<md-option value="02">{{Year}}02</md-option>
+						<md-option value="03">{{Year}}03</md-option>
+						<md-option value="04">{{Year}}04</md-option>
+						<md-option value="05">{{Year}}05</md-option>
+						<md-option value="06">{{Year}}06</md-option>
+						<md-option value="07">{{Year}}07</md-option>
+						<md-option value="08">{{Year}}08</md-option>
+						<md-option value="09">{{Year}}09</md-option>
+						<md-option value="10">{{Year}}10</md-option>
+						<md-option value="11">{{Year}}11</md-option>
+						<md-option value="12">{{Year}}12</md-option>
+					</md-select>
+				</md-input-container>{{EffectiveYearMonth}}
+			</td>
+		</tr>
+		<tr>
+			<td width="150px">Batch Number</td>
+			<td><input ng-model="BatchNumber" ng-keydown="onSearchChange($event)" /></td>
+		</tr>
+		<tr>
+			<td colspan="2">
+				<div style="color:blue;">{{status}}</div>
+				<table border="1" ng-show="ActualBudget.length>0">
+					<tr>
+						<td>Year</td>
+						<td>BG</td>
+						<td>Company</td>
+						<td>SalesPerson</td>
+						<td>EndCustomer</td>
+						<td>Material</td>
+						<td>ProfitCenter</td>
+						<td>SalesType</td>
+						<td>JanAmount</td>
+						<td>FebAmount</td>
+						<td>MarAmount</td>
+						<td>AprAmount</td>
+						<td>MayAmount</td>
+						<td>JunAmount</td>
+						<td>JulAmount</td>
+						<td>AugAmount</td>
+						<td>SepAmount</td>
+						<td>OctAmount</td>
+						<td>NovAmount</td>
+						<td>DecAmount</td>
+					</tr>
+					<tr ng-repeat="x in ActualBudget | orderBy : ['-SalesType','Year','EndCustomer']">
+						<td>{{x.Year}}</td>
+						<td>{{x.BG}}</td>
+						<td>{{x.Company}}</td>
+						<td>{{x.SalesPerson}}</td>
+						<td>{{x.EndCustomer}}</td>
+						<td>{{x.Material}}</td>
+						<td>{{x.ProfitCenter}}</td>
+						<td>{{x.SalesType}}</td>
+						<td>{{x.JanAmount}}</td>
+						<td>{{x.FebAmount}}</td>
+						<td>{{x.MarAmount}}</td>
+						<td>{{x.AprAmount}}</td>
+						<td>{{x.MayAmount}}</td>
+						<td>{{x.JunAmount}}</td>
+						<td>{{x.JulAmount}}</td>
+						<td>{{x.AugAmount}}</td>
+						<td>{{x.SepAmount}}</td>
+						<td>{{x.OctAmount}}</td>
+						<td>{{x.NovAmount}}</td>
+						<td>{{x.DecAmount}}</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</div>

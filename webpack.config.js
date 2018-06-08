@@ -1,13 +1,17 @@
+const path = require('path');
+
 module.exports = {
   entry: {
     SalesPersonProfile: "./js/SalesPersonProfile.js",
     SalesPersonProfileDisplay: "./js/SalesPersonProfileDisplay.js",
     Adjustment: "./js/Adjustment.js",
+    babelPolyfill: "babel-polyfill",
   },
   output: {
     path: __dirname + "/build",
     filename: '[name]Bundle.js'
   },
+  devtool: 'source-map',
   module: {
     rules: [
       {
@@ -16,10 +20,14 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['env']
+            presets: ['es2015']
           }
         }
       }
     ]
+  },
+  devServer: {
+    contentBase: path.join(__dirname, "build"),
+    historyApiFallback: true
   }
 }

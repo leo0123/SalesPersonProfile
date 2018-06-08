@@ -72,9 +72,14 @@
 			</td>
 		</tr>
 		<tr>
+			<td width="150px">Sold To Code</td>
+			<td><textarea ng-model="SoldToCode"></textarea></td>
+		</tr>
+		<tr>
 			<td colspan="2">Year:
 				<md-input-container>
 					<md-select ng-model="Year" ng-change="YearMonthChanged()">
+						<md-option ng-value="2018">2018</md-option>
 						<md-option ng-value="2017">2017</md-option>
 						<md-option ng-value="2016">2016</md-option>
 						<md-option ng-value="2015">2015</md-option>

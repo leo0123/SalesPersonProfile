@@ -1,3 +1,4 @@
+require("babel-polyfill");
 var angular = require("angular");
 var $ = require("jquery");
 require("angular-material");
@@ -17,7 +18,7 @@ var listName = "AdjustmentRecord";
 
 var myApp = angular.module('myApp', ['ngMaterial']);
 myApp.controller("myPreCtrl", function($scope) {
-    $scope.myFormUrl = myFormUrl;
+    $scope.myFormUrl = myFormUrl;// + "1";
 });
 myApp.controller("myCtrl", function($scope, $http) {
     $scope.notAdmin = true;
@@ -50,13 +51,22 @@ myApp.controller("myCtrl", function($scope, $http) {
         });
     };
 
+    function getNewBG(Department) {
+      if (Department == "EPSBG") {
+        return "PSBG-IT";
+      } else if (Department == "MPBG") {
+        return "PSBG-ICM";
+      }
+      return Department;
+    }
+
     function loadFormData() {
         if ($scope.isNew) {
             if ($scope.notAdmin) {
                 if (currentUser.Company == "ALI") {
                     currentUser.Company = "DPC";
                 }
-                $scope.BG = currentUser.Department;
+                $scope.BG = getNewBG(currentUser.Department);
                 $scope.Company = currentUser.Company;
                 $scope.loadOption();
             } else {
@@ -138,11 +148,20 @@ myApp.controller("myCtrl", function($scope, $http) {
         });
     };
 
+    function getOldBG(BG) {
+      if (BG == "PSBG-IT") {
+        return "EPSBG";
+      } else if (BG == "PSBG-ICM") {
+        return "MPBG";
+      }
+      return BG;
+    }
+
     $scope.loadOption = function() {
         if (!$scope.BG || !$scope.Company) {
             return;
         }
-        var url = profileListUrl + "?$filter=BG eq '" + $scope.BG + "' and Company eq '" + $scope.Company + "'&$orderby=DomainAccount&$top=999";
+        var url = profileListUrl + "?$filter=BG eq '" + getOldBG($scope.BG) + "' and Company eq '" + $scope.Company + "'&$orderby=DomainAccount&$top=999";
         HttpGet(url, function mySuccess(result) {
             $scope.SalesPersons = result.d;
         });
@@ -206,8 +225,8 @@ myApp.controller("myCtrl", function($scope, $http) {
     };
 
     function checkCondition() {
-        if (!$scope.SalesPerson && !$scope.EndCustomer && !$scope.Material) {
-            msg.text("Sales Person and End Customer and Material can't be empty at the same time");
+        if (!$scope.SalesPerson && !$scope.EndCustomer && !$scope.Material && !$scope.SoldToCode) {
+            msg.text("Sales Person and End Customer and Material and Sold To Code can't be empty at the same time");
             alert(msg.text());
             return false;
         }
@@ -254,7 +273,7 @@ myApp.controller("myCtrl", function($scope, $http) {
         STSNavigate(decodeURIComponent(myUtility.getParam("Source")));
     };
 
-    PreSaveAction = function() {
+    window.PreSaveAction = function() {
         checkAndSaveToSP();
         return false;
     };
