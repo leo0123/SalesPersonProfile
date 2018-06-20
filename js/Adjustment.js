@@ -15,12 +15,13 @@ var queryActualBudgetUrl = dataServiceUrl + "getActualBudget";
 var queryNextBatchNumUrl = dataServiceUrl + "getNextAdjustBatchNum";
 var AdjustmentListUrl = myAdjustmentConfig.AdjustmentListUrl;
 var listName = "AdjustmentRecord";
+const regex = /[^a-zA-Z0-9,]/;
 
 var myApp = angular.module('myApp', ['ngMaterial']);
-myApp.controller("myPreCtrl", function($scope) {
-    $scope.myFormUrl = myFormUrl;// + "1";
-});
-myApp.controller("myCtrl", function($scope, $http) {
+myApp.controller("myPreCtrl", ["$scope", function($scope) {
+    $scope.myFormUrl = myFormUrl + "1";
+}]);
+myApp.controller("myCtrl", ["$scope", "$http", function($scope, $http) {
     $scope.notAdmin = true;
     $scope.isNew = $("#myFormType").text() == "new" ? true : false;
     var msg = $("#msg");
@@ -44,9 +45,13 @@ myApp.controller("myCtrl", function($scope, $http) {
             currentUser.Company = result.d.UserProfileProperties.results.find(function getCom(prop) {
                 return prop.Key == "Company";
             }).Value;
-            if (currentUser.Department == "IT") {
+            currentUser.AccountName = result.d.UserProfileProperties.results.find(function getAccountName(prop) {
+                return prop.Key == "AccountName";
+            }).Value;
+            if (currentUser.Department == "IT" || currentUser.AccountName == "delta\\am.spserviceprod") {
                 $scope.notAdmin = false;
             }
+            console.log(currentUser.AccountName);
             loadFormData();
         });
     };
@@ -230,6 +235,11 @@ myApp.controller("myCtrl", function($scope, $http) {
             alert(msg.text());
             return false;
         }
+        if (regex.test($scope.SoldToCode)){
+            msg.text("Sold To Code can only contain letters, numbers and separated by comma");
+            alert(msg.text());
+            return false;
+        }
         return true;
     };
 
@@ -328,4 +338,4 @@ myApp.controller("myCtrl", function($scope, $http) {
     function myError(response) {
         msg.text(response.status);
     }
-});
+}]);
