@@ -5,6 +5,7 @@ module.exports = {
     SalesPersonProfile: "./js/SalesPersonProfile.js",
     SalesPersonProfileDisplay: "./js/SalesPersonProfileDisplay.js",
     Adjustment: "./js/Adjustment.js",
+    SPViewPermission: "./js/SPViewPermission.js",
     babelPolyfill: "babel-polyfill",
   },
   output: {
